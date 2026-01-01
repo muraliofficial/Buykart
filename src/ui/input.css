@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", sans-serif;
+  --color-primary: #0D4715;
+  --color-primary-light: #41644A;
+  --color-primary-lightest: #EBF4DD;
+  --color-secondary: #E9762B;
+  --color-bg-light: #EBE1D1;
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+}
+
+/* Typography */
+@layer base {
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  h5 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  h6 {
+    font-size: 0.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  p {
+    font-size: 1rem;
+    color: var(--color-primary);
+  }
+  a {
+    font-size: 1rem;
+    color: var(--color-primary);
+  }
+  span {
+    font-size: 1rem;
+  }
+}
+
+@utility form-control {
+  border: 1px solid var(--color-primary);
+  border-radius: 0.40rem;
+  background-color: var(--color-primary-lightest);
+  color: var(--color-black);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: all 0.15s ease-in-out; 
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary-light);
+    box-shadow: none;
+  }
+  @apply px-4 py-2 w-full;
+}
+
+@utility form-control-glass {
+  @apply w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-200 focus:outline-none focus:bg-white/20 focus:border-white/50 transition-all duration-300 backdrop-blur-sm
+}
+
+@utility material-icons {
+  /* Material Icons */
+  @apply text-base leading-[0] align-middle relative -top-px;
+}
+@utility mi-xs {
+  @apply text-sm leading-none;
+}
+
+@utility mi-sm {
+  @apply text-base leading-none;
+}
+
+@utility mi-md {
+  @apply text-lg leading-none;
+}
+
+@utility mi-lg {
+  @apply text-xl leading-none;
+}
+
+@utility btn {
+  @apply px-4 py-2 text-lg cursor-pointer rounded-md
+}
+@utility btn-sm {
+  @apply px-2 py-1 cursor-pointer rounded-md
+}
+
+@utility btn-primary {
+  @apply bg-primary text-white hover:bg-primary/70
+}
+
+@utility btn-primary-light {
+  @apply bg-primary-light text-white hover:bg-primary-light/70
+}
+
+@utility btn-secondary {
+  @apply bg-secondary text-white hover:bg-secondary/70
+}
+
+@utility btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-600/70
+}
+
+@utility btn-glass {
+  @apply bg-white/10 border border-white/20 rounded-lg shadow-lg text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 backdrop-blur-sm
+}
