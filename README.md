@@ -27,7 +27,7 @@ Buykart is a robust web-based inventory management application designed to strea
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repo-url>
+    git clone gh repo clone muraliofficial/Buykart
     cd Buykart
     ```
 
