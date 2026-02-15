@@ -1,0 +1,28 @@
+{
+  "name": "buykart",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon ./src/server.js",
+    "build:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css",
+    "watch:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css --watch",
+    "dev": "concurrently \"npm run watch:css\" \"npm run start\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "axios": "^1.13.2",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.6.0",
+    "googleapis": "^169.0.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "tailwindcss": "^4.1.18"
+  }
+}

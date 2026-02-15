@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buykart</title>
+    <script src="/public/Js/style.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/Css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+</head>
+<body>
+    <!-- Navigation Component Placeholder -->
+    <div id="nav_buykart-placeholder"></div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8 min-h-screen">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome to BuyKart</h2>
+            <p class="text-gray-500">Here your products all are visible here, take a time and fill your cart</p>
+        </div>
+
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Loader State -->
+            <div class="col-span-full flex justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

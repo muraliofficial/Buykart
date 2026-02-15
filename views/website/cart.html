@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - Buykart</title>
+    <script src="/public/Js/style.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/Css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Component Placeholder -->
+    <div id="nav_buykart-placeholder"></div>
+
+    <div class="max-w-4xl mx-auto px-4 py-8 min-h-screen">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Shopping Cart</h1>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Cart Items List -->
+            <div class="md:col-span-2" id="cart-container">
+                <!-- Items will be injected here by style.js -->
+                <div class="flex justify-center py-12">
+                    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="md:col-span-1">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
+                    <div class="flex justify-between items-center mb-6 pt-4 border-t border-gray-100">
+                        <span class="text-lg font-bold text-gray-800">Total</span>
+                        <span class="text-2xl font-bold text-primary" id="cart-total">₹0</span>
+                    </div>
+                    <button onclick="openAlert('success', 'Checkout functionality coming soon!')" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-light transition shadow-lg shadow-primary/30">Checkout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

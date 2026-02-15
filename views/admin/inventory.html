@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buykart</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/Css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/public/Js/style.js"></script>
+</head>
+
+<body class="bg-primary-lightest min-h-screen">
+    <!-- Navigation Component Placeholder -->
+    <div id="nav-placeholder"></div>
+    <h2 class="text-center">Inventory</h2>
+
+    <!-- Inventory Section -->
+    <section>
+        <div class="flex flex-wrap justify-center items-start gap-4 mx-6 mt-4">
+            <div class="border-2 border-dashed border-primary flex items-center justify-center h-32 w-32 md:w-48 md:h-48 rounded-lg cursor-pointer" onclick="openNewInventory()">
+                <span class="text-5xl text-primary font-semibold">+</span>
+            </div>
+            <div id="inventoryData" class="contents"></div>
+        </div>
+    </section>
+
+    <section id="addInventoryModal" class="inset-0 z-[9999] hidden flex justify-center items-center px-4" style="background-color: rgba(0,0,0,0.5); position: fixed;">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+            <header class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-primary">Add Inventory</h3>
+                <button type="button" class="cursor-pointer text-gray-600 hover:text-red-600 transition" onclick="closeAddinventory()">
+                    <span class="material-icons material-symbols-outlined mi-sm">close</span>
+                </button>
+            </header>
+            <form onsubmit="saveInventory(event)" class="space-y-4">
+                <input type="file" name="inventoryImage" id="inventoryImage" class="hidden" />
+                <div id="addInventoryImage" onclick="addImage()" class="cursor-pointer mx-auto border-2 border-primary border-dashed rounded-md flex justify-center items-center size-16 md:size-20">
+                    <span class="text-2xl text-primary font-semibold">+</span>
+                </div>
+                <select name="category" id="addInventoryCategory" class="form-control" placeholder="Category">
+                    <option value="Fruits">Fruits</option>
+                    <option value="Vegitables">Vegitables</option>
+                </select>
+                <input type="text" name="itemName" class="form-control" placeholder="Item Name" autocomplete="off" required>
+                <select name="unit" id="addInventoryUnit" class="form-control" placeholder="Unit">
+                    <option value="Kgs">Kgs</option>
+                    <option value="Pcs">Pcs</option>
+                </select>
+                <input type="number" name="price" class="form-control" placeholder="Price" autocomplete="off" required>
+                <input type="number" name="op_stock" class="form-control" placeholder="OpeningStock" autocomplete="off" required>
+                <textarea name="description" class="form-control" placeholder="Description" rows="3"></textarea>
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+
+<script>
+    let inventoryList = [];
+    let editId = null;
+
+    function addImage() {
+        $('#inventoryImage').click();
+    }
+
+    $('#inventoryImage').on('change', function () {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                $('#addInventoryImage').html(`<img src="${e.target.result}" class="w-full h-full object-cover rounded-md">`);
+                $('#addInventoryImage').addClass('border-none')
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+
+    function closeAddinventory() {
+        $('#addInventoryModal').addClass('hidden');
+    }
+
+    function openNewInventory() {
+        editId = null;
+        $('form')[0].reset();
+        resetPreview();
+        $('#modalTitle').text('Add Inventory');
+        openAddInventory();
+    }
+
+    function openAddInventory() {
+        $('#addInventoryModal').removeClass('hidden');
+
+    }
+
+    function resetPreview() {
+        $('#addInventoryImage').html(`<span class="text-2xl text-primary font-semibold">+</span>`);
+        $('#addInventoryImage').removeClass('border-none');
+    }
+
+    async function saveInventory(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        // Client-side validation for image
+        // If adding new (editId is null), image is required. If editing, it's optional.
+        if (!editId && $('#inventoryImage')[0].files.length === 0) {
+            openAlert('error', 'Please upload an image for the inventory item.');
+            return;
+        }
+
+        try {
+            let response;
+            if (editId) {
+                // Update existing
+                response = await axios.put(`/updateInventory/${editId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                // Create new
+                response = await axios.post('/addInventory', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
+
+            console.log(response.status);
+            openAlert('success', editId ? 'Inventory updated successfully!' : 'Inventory saved successfully!');
+            closeAddinventory();
+            e.target.reset();
+            resetPreview();
+            getInventory();
+        } catch (error) {
+            console.error('Error saving inventory:', error);
+            const errorMsg = error.response && error.response.data && error.response.data.message ? error.response.data.message : 'Failed to save inventory';
+            openAlert('error', errorMsg);
+        }
+    }
+
+    async function getInventory() {
+        try {
+            const response = await axios.get('/getInventory');
+            const items = response.data;
+            inventoryList = items; // Store for editing
+            let html = '';
+            items.forEach(item => {
+                html += `
+                    <div class="flex flex-col w-32 md:w-48">
+                        <div class="group hover:cursor-pointer border-2 bg-white/10 border-gray-200 flex items-center justify-center h-32 w-32 md:w-48 md:h-48 rounded-lg overflow-hidden relative">
+                            <img src="/public/img/${item.image}" alt="${item.itemName}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <div class="absolute bottom-0 left-0 right-0 bg-black/30 p-2 flex justify-center gap-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                <button onclick="editInventory('${item.id}')" class="cursor-pointer text-white hover:text-secondary group-hover:text-shadow-lg">
+                                    <span class="material-icons">edit</span>
+                                </button>
+                                <button onclick="deleteInventory('${item.id}')" class="cursor-pointer text-white hover:text-red-600 group-hover:text-shadow-lg">
+                                    <span class="material-icons">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="font-bold text-gray-700 truncate w-full">${item.itemName}</h4>
+                            <p class="text-sm text-gray-500">₹${item.price} / ${item.unit}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#inventoryData').html(html);
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+        }
+    }
+
+    function editInventory(id) {
+        const item = inventoryList.find(i => i.id === id);
+        if (item) {
+            editId = id;
+            // Populate form
+            $('input[name="itemName"]').val(item.itemName);
+            $('select[name="unit"]').val(item.unit);
+            $('select[name="category"]').val(item.category);
+            $('input[name="price"]').val(item.price);
+            $('input[name="op_stock"]').val(item.op_stock);
+            $('textarea[name="description"]').val(item.description || '');
+            
+            // Show existing image preview
+            $('#addInventoryImage').html(`<img src="/public/img/${item.image}" class="w-full h-full object-cover rounded-md">`);
+            $('#addInventoryImage').addClass('border-none');
+            
+            $('#modalTitle').text('Edit Inventory');
+            openAddInventory();
+        }
+    }
+
+    async function deleteInventory(id) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            try {
+                await axios.delete(`/deleteInventory/${id}`);
+                openAlert('success', 'Inventory deleted successfully');
+                getInventory();
+            } catch (error) {
+                console.error('Error deleting inventory:', error);
+                openAlert('error', 'Failed to delete inventory');
+            }
+        }
+    }
+
+    // Initial load
+    getInventory();
+</script>
+
+</html>

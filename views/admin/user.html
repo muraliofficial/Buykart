@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buykart</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/Css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-primary to-primary-light flex items-center justify-center min-h-screen px-4">
+     <section class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 md:p-8 mx-auto shadow-2xl w-full max-w-md">
+        <form onsubmit="addUser(event)">
+            <div class="space-y-6">
+                <h2 class="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md">Create New User</h2>
+                <input id="name" class="form-control-glass" type="text" placeholder="Username" autocomplete="off" required />
+                <input id="phone" class="form-control-glass" type="number" placeholder="Phone Number" autocomplete="off" required />
+                <div class="relative">
+                    <input id="password" minlength="4" class="form-control-glass w-full pr-10" type="password" placeholder="Password" autocomplete="off" required />
+                    <button type="button" onclick="showPassword('password')" class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-white"><span id="showPasswordIcon" class="material-icons material-symbols-outlined mi-sm!">visibility_off</span></button>
+                </div>
+                <div class="relative">
+                    <input id="confirmPassword" minlength="4" class="form-control-glass w-full pr-10" type="password" placeholder="Confirm Password" autocomplete="off" required />
+                    <button type="button" onclick="showPassword('confirmPassword')" class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-white"><span id="showConfirmPasswordIcon" class="material-icons material-symbols-outlined mi-sm!">visibility_off</span></button>
+                    <span id="pwdInvalid" class="text-red-600 hidden"><span class="material-icons material-symbols-outlined mi-sm!">cancel</span> Password not match</span>
+                </div>
+
+                <button type="submit" class="group flex items-center justify-center gap-x-2 w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <span class="text-white text-lg">Sign Up</span>
+                </button>
+            </div>
+        </form>
+    </section>
+
+</body>
+<script src="/public/Js/style.js"></script>
+
+<script>
+    function showPassword(passwordField) {
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput = document.getElementById("confirmPassword");
+        const showPasswordIcon = document.getElementById("showPasswordIcon");
+        const showConfirmPasswordIcon = document.getElementById("showConfirmPasswordIcon");
+
+        if(passwordField == 'password') {
+            passwordInput.type === 'password' ? passwordInput.type = 'text' : passwordInput.type = 'password';
+            showPasswordIcon.textContent = passwordInput.type === 'password' ? 'visibility_off' : 'visibility';
+        } else if(passwordField == 'confirmPassword') {
+            confirmPasswordInput.type === 'password' ? confirmPasswordInput.type = 'text' : confirmPasswordInput.type = 'password';
+            showConfirmPasswordIcon.textContent = confirmPasswordInput.type === 'password' ? 'visibility_off' : 'visibility';
+        }
+    }
+
+function addUser(event) {
+    event.preventDefault();
+    const userDetails = {}
+    userDetails.name = document.getElementById("name").value;
+    userDetails.phone = document.getElementById("phone").value;
+    userDetails.password = document.getElementById("password").value;
+    userDetails.confirmPassword = document.getElementById("confirmPassword").value;
+    const pwdInvalid = document.getElementById("pwdInvalid");
+
+    if (userDetails.password.length >= 4) {
+        if (userDetails.password !== userDetails.confirmPassword) {
+            pwdInvalid.classList.remove("hidden");
+            return;
+        } else {
+            pwdInvalid.classList.add("hidden");
+            saveUser(userDetails)
+        }
+    }
+    else {
+        openAlert('error', "Password Invalid");
+        pwdInvalid.classList.remove("hidden");
+    }
+}
+
+function resetNewUserForm() {
+    document.querySelector('form').reset();
+}
+
+async function saveUser(userDetails) {
+    try {
+        // Assuming /addUser is the endpoint
+        const response = await axios.post('/addUser', userDetails);
+        openAlert('success', 'User created successfully!');
+        resetNewUserForm();
+    } catch (error) {
+        console.error('Error adding user:', error);
+        openAlert('error', error.response?.data?.message || 'Failed to create user');
+    }
+}
+    
+</script>
+</html>

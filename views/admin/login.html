@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buykart</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/public/Css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-primary to-primary-light flex items-center justify-center min-h-screen px-4">
+     <section class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 md:p-8 mx-auto shadow-2xl w-full max-w-md">
+        <div class="flex justify-center mb-6 md:mb-8">
+            <img src="/public/img/logo(1).png" class="h-32 md:h-52 drop-shadow-lg" alt="Buykart">
+        </div>
+        <form onsubmit="loginPage(event)">
+            <div class="space-y-6">
+                <h2 class="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md">Welcome Back</h2>
+                <div class="space-y-4">
+                    <input id="username" class="form-control-glass" type="text" placeholder="User Name or Phone Number" autocomplete="off" required>
+                    <input id="password" class="form-control-glass" type="password" placeholder="Password" autocomplete="off" required>
+                </div>
+                <button class="group flex items-center justify-center gap-x-2 w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <span class="text-white text-lg">Login</span>
+                </button>
+                <div class="flex justify-center">
+                    <button onclick="newUserPage()" class="btn-sm btn-glass w-full" type="button">Sign up</button>
+                </div>
+            </div>
+        </form>
+    </section>
+</body>
+<script src="/public/Js/style.js"></script>
+</html>
