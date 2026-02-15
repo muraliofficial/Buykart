@@ -1,5 +1,5 @@
 <nav class="bg-white/10 shadow-sm mb-8 z-50">
-    <div class="max-w-6xl mx-auto px-4 flex justify-between h-24 items-center">
+    <div class="max-w-6xl mx-auto px-4 flex justify-between h-24 items-center relative">
         <a href="/buykart" class="">
             <img src="/public/img/logo(1).png" alt="Buykart Logo" class="h-18" />
         </a>
@@ -24,15 +24,27 @@
         </div>
 
         <div class="flex gap-x-6 items-center">
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-600 hover:text-primary cursor-pointer" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                <span class="material-icons material-symbols-outlined mi-xl">menu</span>
+            </button>
             <a href="/cart">
                 <span class="text-primary material-icons material-symbols-outlined mi-xl">local_mall</span>
             </a>
-            <div class="cursor-pointer hidden" id="logoutBtn">
-                <span class="text-red-500 material-icons material-symbols-outlined mi-xl" title="Logout">logout</span>
+            <div id="logoutBtn" class="cursor-pointer hidden" title="Logout">
+                <span class="text-red-600 material-icons material-symbols-outlined mi-xl">logout</span>
             </div>
             <div class="cursor-pointer">
                 <span class="text-primary material-icons material-symbols-outlined mi-xl">account_circle</span>
             </div>
         </div>
+    </div>
+
+    <!-- Mobile Menu Dropdown -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3 shadow-lg">
+        <a href="/buykart" class="block text-gray-600 hover:text-primary font-semibold">Home</a>
+        <a href="/buykart" class="block text-gray-600 hover:text-primary font-semibold">Fruits & Vegetables</a>
+        <a href="/about" class="block text-gray-600 hover:text-primary font-semibold">About</a>
+        <a href="/contact" class="block text-gray-600 hover:text-primary font-semibold">Contact</a>
     </div>
 </nav>

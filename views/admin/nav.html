@@ -1,6 +1,6 @@
 <nav class="bg-white/10 shadow-sm mb-8 z-50">
     <div class="max-w-6xl mx-auto px-4">
-        <div class="flex justify-between h-24">
+        <div class="flex justify-between h-24 items-center">
             <div class="flex gap-x-8 items-center">
                 <a href="/home" class="">
                     <img src="/public/img/logo(1).png" alt="..." class="h-18" />
@@ -12,11 +12,23 @@
                     <a href="/buykart" class="text-gray-600 hover:text-primary transition font-medium">Website</a>
                 </div>
             </div>
-            <div class="flex items-center">
-                <a id="logoutBtn" href="/" class="">
-                    <span class="text-red-600 material-icons material-symbols-outlined mi-sm">logout</span>
-                </a>
+            <div class="flex items-center gap-x-4">
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden text-gray-600 hover:text-primary cursor-pointer" onclick="document.getElementById('adminMobileMenu').classList.toggle('hidden')">
+                    <span class="material-icons material-symbols-outlined mi-xl">menu</span>
+                </button>
+                <div id="logoutBtn" class="cursor-pointer hidden" title="Logout">
+                    <span class="text-red-600 material-icons material-symbols-outlined mi-xl">logout</span>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Mobile Menu Dropdown -->
+    <div id="adminMobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3 shadow-lg">
+        <a href="/home" class="block text-gray-600 hover:text-primary font-medium">Home</a>
+        <a href="/inventory" class="block text-gray-600 hover:text-primary font-medium">Inventory</a>
+        <a href="/admin" class="block text-gray-600 hover:text-primary font-medium">Admin</a>
+        <a href="/buykart" class="block text-gray-600 hover:text-primary font-medium">Website</a>
     </div>
 </nav>

@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     logoutBtn.style.display = "block";
                     logoutBtn.addEventListener('click', () => {
                         localStorage.removeItem('currentUser');
+                        window.location.href = '/';
                     });
                 } else {
                     if (logoutBtn) logoutBtn.style.display = "none";
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     logoutBtn.style.display = "block";
                     logoutBtn.addEventListener('click', () => {
                         localStorage.removeItem('currentUser');
-                        window.location.reload();
+                        window.location.href = '/';
                     });
                 } else if (logoutBtn) {
                     logoutBtn.style.display = "none";
@@ -196,7 +197,7 @@ function saveCart(cart) {
 function addToCart(id) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
-        openAlert('error', 'Please login to add items to the cart.');
+        window.location.href = '/';
         return;
     }
 

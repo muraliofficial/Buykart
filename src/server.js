@@ -31,4 +31,21 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
+    console.log(`Mobile IP: ${getMobileIP()}:${port}`);
 });
+
+function getMobileIP() {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    for (const ifaceName in interfaces) {
+        const iface = interfaces[ifaceName];
+        for (const ifaceInfo of iface) {
+            if (ifaceInfo.family === 'IPv4' && ifaceInfo.address.startsWith('192.168.')) {
+                return ifaceInfo.address;
+            }
+        }
+    }
+    return 'Mobile IP not found';
+}
+
+module.exports = app;
