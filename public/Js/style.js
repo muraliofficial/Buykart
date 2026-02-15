@@ -4,9 +4,6 @@ const apiUrl = {
     addUser: '/addUser',
     getInventory: '/getInventory',
 };
-
-
-// Logout Button Show
 document.addEventListener('DOMContentLoaded', () => {
     // Load Navigation Component
     const navPlaceholder = document.getElementById('nav-placeholder');
@@ -108,18 +105,6 @@ async function loginPage(e) {
     } catch (error) {
         console.error("Login error:", error);
         openAlert('error', error.response?.data?.message || "Something went wrong. Please try again.")
-    }
-}
-
-async function saveUser(userDetails) {
-    try {
-        const response = await axios.post(apiUrl.addUser, userDetails);
-        alert(response.data.message);
-        resetNewUserForm()
-        window.location.href = '/';
-    } catch (error) {
-        console.error('Error:', error);
-        openAlert('Error', 'Error adding user')
     }
 }
 
