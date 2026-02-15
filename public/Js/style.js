@@ -140,7 +140,7 @@ function getProductData() {
                 cardsHtml += `
                     <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden border border-gray-100 group flex flex-col h-full">
                         <div class="relative h-48 overflow-hidden bg-gray-50">
-                            <img src="/public/img/${product.image}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <img src="${product.image.startsWith('http') ? product.image : '/public/img/' + product.image}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-primary shadow-sm">
                                 ${product.category}
                             </div>
@@ -269,7 +269,7 @@ function renderCartPage() {
             <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm mb-4">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden">
-                        <img src="/public/img/${item.image}" class="w-full h-full object-cover">
+                        <img src="${item.image.startsWith('http') ? item.image : '/public/img/' + item.image}" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">${item.itemName}</h3>

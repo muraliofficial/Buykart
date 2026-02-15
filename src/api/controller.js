@@ -1,6 +1,5 @@
-const { db } = require('./firebase');
+const { db, storage } = require('./firebase');
 const path = require('path');
-const fs = require('fs');
 
 const COLLECTION_NAME = 'products';
 
@@ -33,15 +32,16 @@ exports.addInventory = async (req, res) => {
             if (req.file.filename) {
                 imageFilename = req.file.filename;
             } else if (req.file.buffer) {
-                // Middleware used memory storage, write to disk manually
-                const uploadDir = path.join(__dirname, '../../public/img');
-                if (!fs.existsSync(uploadDir)) {
-                    fs.mkdirSync(uploadDir, { recursive: true });
-                }
+                // Upload to Firebase Storage
+                const bucket = storage.bucket();
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                imageFilename = uniqueSuffix + path.extname(req.file.originalname);
-                
-                fs.writeFileSync(path.join(uploadDir, imageFilename), req.file.buffer);
+                const extension = path.extname(req.file.originalname);
+                const fileName = `inventory/${uniqueSuffix}${extension}`;
+                const file = bucket.file(fileName);
+
+                await file.save(req.file.buffer, { metadata: { contentType: req.file.mimetype } });
+                await file.makePublic();
+                imageFilename = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
             }
         } else {
             return res.status(400).json({ message: 'Image is required' });
@@ -76,13 +76,14 @@ exports.updateInventory = async (req, res) => {
             if (req.file.filename) {
                 imageFilename = req.file.filename;
             } else if (req.file.buffer) {
-                const uploadDir = path.join(__dirname, '../../public/img');
-                if (!fs.existsSync(uploadDir)) {
-                    fs.mkdirSync(uploadDir, { recursive: true });
-                }
+                const bucket = storage.bucket();
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                imageFilename = uniqueSuffix + path.extname(req.file.originalname);
-                fs.writeFileSync(path.join(uploadDir, imageFilename), req.file.buffer);
+                const extension = path.extname(req.file.originalname);
+                const fileName = `inventory/${uniqueSuffix}${extension}`;
+                const file = bucket.file(fileName);
+                await file.save(req.file.buffer, { metadata: { contentType: req.file.mimetype } });
+                await file.makePublic();
+                imageFilename = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
             }
             updateData.image = imageFilename;
             
@@ -111,9 +112,14 @@ exports.deleteInventory = async (req, res) => {
 
         // 2. Delete image file from public/img
         if (data.image) {
-            const imagePath = path.join(__dirname, '../../public/img', data.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+            // If it's a storage URL, try to delete from bucket
+            if (data.image.startsWith('http')) {
+                try {
+                    const bucket = storage.bucket();
+                    // Extract path from URL (simple split for standard storage URLs)
+                    const filePath = data.image.split(`${bucket.name}/`)[1];
+                    if (filePath) await bucket.file(filePath).delete();
+                } catch (e) { console.log("Error deleting file", e.message); }
             }
         }
 

@@ -1,3 +1,4 @@
 node_modules/
-public/img/
+credentials.json
 .env
+.DS_Store

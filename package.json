@@ -2,9 +2,9 @@
   "name": "buykart",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "nodemon ./src/server.js",
+    "start": "node ./src/server.js",
     "build:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css",
     "watch:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css --watch",
     "dev": "concurrently \"npm run watch:css\" \"npm run start\""
@@ -13,6 +13,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": "18"
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "axios": "^1.13.2",
