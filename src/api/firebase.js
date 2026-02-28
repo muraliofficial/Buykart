@@ -30,9 +30,8 @@ if (!admin.apps.length) {
             storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`,
         });
     } else {
-        console.warn('Firebase Admin SDK not initialized: credentials not found.');
-        // In a strict environment, you might want to throw an error here:
-        // throw new Error('Firebase credentials not found.');
+        // If no credentials are found, throw a specific error to halt execution.
+        throw new Error('Firebase Admin SDK initialization failed: Credentials not found. Ensure FIREBASE_PRIVATE_KEY and other required environment variables are set in your deployment.');
     }
 }
 
