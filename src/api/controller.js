@@ -28,11 +28,8 @@ exports.addInventory = async (req, res) => {
         let imageFilename = '';
 
         if (req.file) {
-            // Check if file is already saved to disk (if middleware did it)
-            if (req.file.filename) {
-                imageFilename = req.file.filename;
-            } else if (req.file.buffer) {
-                // Upload to Firebase Storage
+            // Upload to Firebase Storage
+            if (req.file.buffer) {
                 const bucket = storage.bucket();
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
                 const extension = path.extname(req.file.originalname);
@@ -73,9 +70,7 @@ exports.updateInventory = async (req, res) => {
 
         if (req.file) {
             let imageFilename = '';
-            if (req.file.filename) {
-                imageFilename = req.file.filename;
-            } else if (req.file.buffer) {
+            if (req.file.buffer) {
                 const bucket = storage.bucket();
                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
                 const extension = path.extname(req.file.originalname);
@@ -110,7 +105,7 @@ exports.deleteInventory = async (req, res) => {
 
         const data = doc.data();
 
-        // 2. Delete image file from public/img
+        // 2. Delete image file from Storage
         if (data.image) {
             // If it's a storage URL, try to delete from bucket
             if (data.image.startsWith('http')) {
