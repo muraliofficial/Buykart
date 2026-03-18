@@ -104,7 +104,7 @@ async function loginPage(e) {
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         window.location.href = '/home';
     } catch (error) {
-        console.error("Login error:", error);
+        console.error("Login error details:", error.response || error);
         openAlert('error', error.response?.data?.message || "Something went wrong. Please try again.")
     }
 }
