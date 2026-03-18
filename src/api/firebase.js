@@ -14,9 +14,9 @@ if (!admin.apps.length) {
     if (process.env.FIREBASE_PRIVATE_KEY) {
         console.log('Initializing Firebase using Environment Variables');
         serviceAccount = {
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            project_id: process.env.FIREBASE_PROJECT_ID,
+            client_email: process.env.FIREBASE_CLIENT_EMAIL,
+            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         };
     } 
     // 2. Local: Use credentials.json file
