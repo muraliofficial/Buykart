@@ -27,8 +27,13 @@ if (!admin.apps.length) {
 
     if (serviceAccount) {
         // Validate credentials structure to prevent "16 UNAUTHENTICATED" errors
-        if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
-            throw new Error("Invalid credentials.json file. You likely downloaded an 'OAuth 2.0 Client ID'. You need a 'Service Account Key'. Go to Firebase Console -> Project Settings -> Service Accounts -> Generate New Private Key.");
+        // Check for both snake_case (JSON file) and camelCase (Env vars)
+        const hasProjectId = serviceAccount.project_id || serviceAccount.projectId;
+        const hasPrivateKey = serviceAccount.private_key || serviceAccount.privateKey;
+        const hasClientEmail = serviceAccount.client_email || serviceAccount.clientEmail;
+
+        if (!hasProjectId || !hasPrivateKey || !hasClientEmail) {
+            throw new Error("Invalid credentials. Check your 'credentials.json' (local) or Environment Variables (Vercel). Ensure you have a 'Service Account Key'.");
         }
 
         const projectId = serviceAccount.projectId || serviceAccount.project_id;
