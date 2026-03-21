@@ -7,14 +7,15 @@ const controller = require('./controller');
 
 // Configure Multer for disk storage.
 // NOTE: Ensure the destination directory 'public/img/inventory' exists.
-const uploadDir = path.join(__dirname, '../../public/img/inventory');
+const isVercel = process.env.VERCEL === '1';
+const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
 
 try {
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
     }
 } catch (error) {
-    console.warn("Warning: Could not create upload directory. This is expected on read-only deployments (Vercel). File uploads will fail locally.", error.message);
+    console.warn("Warning: Could not create upload directory.", error.message);
 }
 
 const storage = multer.diskStorage({
