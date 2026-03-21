@@ -1,6 +1,10 @@
 <nav class="bg-white/10 shadow-sm mb-8 z-50">
     <div class="max-w-6xl mx-auto px-4">
         <div class="flex justify-between h-24 items-center">
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-600 hover:text-primary cursor-pointer" onclick="document.getElementById('adminMobileMenu').classList.toggle('hidden')">
+                <span class="material-icons material-symbols-outlined mi-xl">menu</span>
+            </button>
             <div class="flex gap-x-8 items-center">
                 <a href="/home" class="">
                     <img src="/public/img/logo(1).png" alt="..." class="h-18" />
@@ -13,10 +17,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-x-4">
-                <!-- Mobile Menu Button -->
-                <button class="md:hidden text-gray-600 hover:text-primary cursor-pointer" onclick="document.getElementById('adminMobileMenu').classList.toggle('hidden')">
-                    <span class="material-icons material-symbols-outlined mi-xl">menu</span>
-                </button>
                 <div id="logoutBtn" class="cursor-pointer hidden" title="Logout">
                     <span class="text-red-600 material-icons material-symbols-outlined mi-xl">logout</span>
                 </div>

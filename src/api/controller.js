@@ -31,7 +31,7 @@ exports.addInventory = async (req, res) => {
         }
 
         // With multer.diskStorage, file is saved locally. We store the relative path.
-        const imageFilename = `inventory/${req.file.filename}`;
+        const imageFilename = req.file.filename;
 
         const newInventory = { category, itemName, unit, price, op_stock, description, image: imageFilename, createdAt: new Date().toISOString() };
 
@@ -59,7 +59,7 @@ exports.updateInventory = async (req, res) => {
 
         if (req.file) {
             // A new file is uploaded, update the image field and delete the old one.
-            updateData.image = `inventory/${req.file.filename}`;
+            updateData.image = req.file.filename;
             
             // Fetch the old document to get the old image path for deletion.
             const docRef = db.collection('inventory').doc(id);
@@ -68,7 +68,9 @@ exports.updateInventory = async (req, res) => {
                 const oldImage = doc.data().image;
                 // Avoid trying to delete Firebase Storage URLs from the local filesystem
                 if (!oldImage.startsWith('http')) {
-                    const oldImagePath = path.join(__dirname, '../../public/img', oldImage);
+                    // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
+                    const cleanName = oldImage.replace(/^inventory[\\/]/, '');
+                    const oldImagePath = path.join(__dirname, '../../public/img/inventory', cleanName);
                     try {
                         await fs.unlink(oldImagePath);
                     } catch (e) {
@@ -103,7 +105,9 @@ exports.deleteInventory = async (req, res) => {
             // If it's a local file path (not a URL), delete it from the server.
             if (!data.image.startsWith('http')) {
                 try {
-                    const imagePath = path.join(__dirname, '../../public/img', data.image);
+                    // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
+                    const cleanName = data.image.replace(/^inventory[\\/]/, '');
+                    const imagePath = path.join(__dirname, '../../public/img/inventory', cleanName);
                     await fs.unlink(imagePath);
                 } catch (e) {
                     // Log error but don't block DB deletion if file is already gone.

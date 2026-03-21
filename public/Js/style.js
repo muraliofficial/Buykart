@@ -35,18 +35,41 @@ document.addEventListener('DOMContentLoaded', () => {
         axios.get('/buykart/nav')
             .then(response => {
                 navBuykartPlaceholder.innerHTML = response.data;
-
+    
+                // Get all account-related buttons for desktop and mobile
                 const logoutBtn = document.getElementById("logoutBtn");
+                const loginBtn = document.getElementById("loginBtn");
+                const logoutBtnMobile = document.getElementById("logoutBtnMobile");
+                const loginBtnMobile = document.getElementById("loginBtnMobile");
+    
                 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+                const handleLogout = (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('currentUser');
+                    window.location.href = '/';
+                };
+    
+                if (currentUser) {
+                    // --- Logged IN State ---
+                    if (loginBtn) loginBtn.style.display = 'none';
+                    if (loginBtnMobile) loginBtnMobile.style.display = 'none';
+                    
+                    if (logoutBtn) {
+                        logoutBtn.style.display = 'flex';
+                        logoutBtn.addEventListener('click', handleLogout);
+                    }
+                    if (logoutBtnMobile) {
+                        logoutBtnMobile.style.display = 'flex';
+                        logoutBtnMobile.addEventListener('click', handleLogout);
+                    }
+                } else {
+                    // --- Logged OUT State ---
+                    if (logoutBtn) logoutBtn.style.display = 'none';
+                    if (logoutBtnMobile) logoutBtnMobile.style.display = 'none';
 
-                if (currentUser && logoutBtn) {
-                    logoutBtn.style.display = "block";
-                    logoutBtn.addEventListener('click', () => {
-                        localStorage.removeItem('currentUser');
-                        window.location.href = '/';
-                    });
-                } else if (logoutBtn) {
-                    logoutBtn.style.display = "none";
+                    if (loginBtn) loginBtn.style.display = 'flex';
+                    if (loginBtnMobile) loginBtnMobile.style.display = 'flex';
                 }
             })
             .catch(err => console.error('Error loading buykart nav:', err));
@@ -141,7 +164,7 @@ function getProductData() {
                 cardsHtml += `
                     <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden border border-gray-100 group flex flex-col h-full">
                         <div class="relative h-48 overflow-hidden bg-gray-50">
-                            <img src="${product.image.startsWith('http') ? product.image : '/public/img/' + product.image}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <img src="${product.image.startsWith('http') ? product.image : '/public/img/inventory/' + product.image.replace('inventory/', '')}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-primary shadow-sm">
                                 ${product.category}
                             </div>
@@ -270,7 +293,7 @@ function renderCartPage() {
             <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm mb-4">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden">
-                        <img src="${item.image.startsWith('http') ? item.image : '/public/img/' + item.image}" class="w-full h-full object-cover">
+                        <img src="${item.image.startsWith('http') ? item.image : '/public/img/inventory/' + item.image.replace('inventory/', '')}" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">${item.itemName}</h3>
