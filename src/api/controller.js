@@ -96,7 +96,12 @@ exports.updateInventory = async (req, res) => {
             const doc = await docRef.get();
             if (doc.exists && doc.data().image) {
                 const oldImage = doc.data().image;
-                const oldImageId = doc.data().imageId;
+                let oldImageId = doc.data().imageId;
+                
+                if (!oldImageId && oldImage.includes('cloudinary.com')) {
+                    const match = oldImage.match(/\/upload\/(?:v\d+\/)?(.+?)\.[a-zA-Z0-9]+$/);
+                    if (match) oldImageId = match[1];
+                }
                 
                 if (oldImageId) {
                     try {
@@ -140,9 +145,17 @@ exports.deleteInventory = async (req, res) => {
 
         // 2. Delete image file from Storage
         if (data.image) {
-            if (data.imageId) {
+            let publicId = data.imageId;
+            
+            // Fallback for older items that might not have imageId saved but have a cloudinary URL
+            if (!publicId && data.image.includes('cloudinary.com')) {
+                const match = data.image.match(/\/upload\/(?:v\d+\/)?(.+?)\.[a-zA-Z0-9]+$/);
+                if (match) publicId = match[1];
+            }
+
+            if (publicId) {
                 try {
-                    await cloudinary.uploader.destroy(data.imageId);
+                    await cloudinary.uploader.destroy(publicId);
                 } catch (e) {
                     console.log("Error deleting Cloudinary image:", e.message);
                 }
@@ -295,6 +308,65 @@ exports.addUser = async (req, res) => {
         res.status(200).json({ message: 'User added successfully', id: docRef.id });
     } catch (error) {
         console.error('Add User Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getUsers = async (req, res) => {
+    try {
+        const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
+        const users = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.name,
+                phone: data.phone,
+                createdAt: data.createdAt
+            };
+        });
+        res.status(200).json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getOrders = async (req, res) => {
+    try {
+        const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
+        const orders = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.checkout = async (req, res) => {
+    try {
+        const { cart, userId, userName } = req.body;
+
+        if (!cart || Object.keys(cart).length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
+
+        // Create an order record
+        const orderData = {
+            userId: userId || 'UnknownUser', // Prevent Firestore crash if userId is undefined
+            userName: userName || 'Unknown',
+            items: cart,
+            status: "Completed",
+            createdAt: new Date().toISOString()
+        };
+        
+        await db.collection('orders').add(orderData);
+
+        res.status(200).json({ message: "Order placed successfully" });
+    } catch (error) {
+        console.error("Checkout Error:", error);
         res.status(500).json({ message: error.message });
     }
 };

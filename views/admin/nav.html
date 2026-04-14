@@ -1,17 +1,29 @@
 <nav class="bg-white/10 shadow-sm mb-8 z-50">
     <div class="max-w-6xl mx-auto px-4">
         <div class="flex justify-between h-24 items-center">
-            <!-- Mobile Menu Button -->
-            <button class="md:hidden text-gray-600 hover:text-primary cursor-pointer" onclick="document.getElementById('adminMobileMenu').classList.toggle('hidden')">
-                <span class="material-icons material-symbols-outlined mi-xl">menu</span>
-            </button>
+            <!-- Mobile Menu Dropdown -->
+            <el-dropdown class="md:hidden">
+                <button class="text-gray-600 hover:text-primary cursor-pointer flex items-center outline-none">
+                    <span class="material-icons material-symbols-outlined mi-xl">menu</span>
+                </button>
+                <el-menu anchor="bottom start" popover class="w-48 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in">
+                    <div class="py-1">
+                        <a href="/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
+                        <a href="/inventory" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Inventory</a>
+                        <a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Orders</a>
+                        <a href="/admin" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin</a>
+                        <a href="/buykart" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Website</a>
+                    </div>
+                </el-menu>
+            </el-dropdown>
             <div class="flex gap-x-8 items-center">
-                <a href="/home" class="">
+                <a href="/dashboard" class="">
                     <img src="/public/img/logo(1).png" alt="..." class="h-18" />
                 </a>
                 <div class="hidden md:flex gap-x-4">
-                    <a href="/home" class="text-gray-600 hover:text-primary transition font-medium">Home</a>
+                    <a href="/dashboard" class="text-gray-600 hover:text-primary transition font-medium">Dashboard</a>
                     <a href="/inventory" class="text-gray-600 hover:text-primary transition font-medium">Inventory</a>
+                    <a href="/orders" class="text-gray-600 hover:text-primary transition font-medium">Orders</a>
                     <a href="/admin" class="text-gray-600 hover:text-primary transition font-medium">Admin</a>
                     <a href="/buykart" class="text-gray-600 hover:text-primary transition font-medium">Website</a>
                 </div>
@@ -22,13 +34,5 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Mobile Menu Dropdown -->
-    <div id="adminMobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3 shadow-lg">
-        <a href="/home" class="block text-gray-600 hover:text-primary font-medium">Home</a>
-        <a href="/inventory" class="block text-gray-600 hover:text-primary font-medium">Inventory</a>
-        <a href="/admin" class="block text-gray-600 hover:text-primary font-medium">Admin</a>
-        <a href="/buykart" class="block text-gray-600 hover:text-primary font-medium">Website</a>
     </div>
 </nav>

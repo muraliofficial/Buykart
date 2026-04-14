@@ -2,7 +2,13 @@
 const apiUrl = {
     login: '/login',
     addUser: '/addUser',
-    getInventory: '/getInventory',
+    getInventory: '/getInventory', // GET
+    addInventory: '/addInventory', // POST (FormData)
+    updateInventory: '/updateInventory', // PUT (FormData) /:id
+    deleteInventory: '/deleteInventory', // DELETE /:id
+    checkout: '/checkout', // POST
+    getOrders: '/getOrders', // GET
+    getUsers: '/getUsers', // GET
 };
 document.addEventListener('DOMContentLoaded', () => {
     // Load Navigation Component
@@ -106,6 +112,47 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('cart-container')) {
         renderCartPage();
     }
+
+    // Load Admin Dashboard Logic
+    if (document.getElementById('main-dashboard')) {
+        loadAdminDashboard();
+    }
+
+    // Load Admin Inventory Page Logic
+    if (document.getElementById('inventory-table-body')) {
+        loadInventoryAdmin();
+    }
+
+    // Load Admin Orders Page Logic
+    if (document.getElementById('orders-table-body')) {
+        loadOrdersAdmin();
+    }
+
+    // Load Admin Users Page Logic
+    if (document.getElementById('users-table-body')) {
+        loadUsersAdmin();
+    }
+
+    // Add event listener for Add Inventory Form
+    const addInventoryForm = document.getElementById('addInventoryForm');
+    if (addInventoryForm) {
+        addInventoryForm.addEventListener('submit', addInventory);
+    }
+
+    // Add event listener for Edit Inventory Form
+    const editInventoryForm = document.getElementById('editInventoryForm');
+    if (editInventoryForm) {
+        editInventoryForm.addEventListener('submit', updateInventory);
+        // Handle closing the modal
+        const closeButton = document.getElementById('closeEditModal');
+        if(closeButton) closeButton.addEventListener('click', closeEditModal);
+    }
+
+    // Add event listener for Add User Form
+    const addUserForm = document.getElementById('addUserForm');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', addUser);
+    }
 });
 
 // Login Function
@@ -125,7 +172,7 @@ async function loginPage(e) {
         const currentUser = response.data.user;
         console.log(currentUser, "currentUser");
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        window.location.href = '/home';
+        window.location.href = '/dashboard';
     } catch (error) {
         console.error("Login error details:", error.response || error);
         openAlert('error', error.response?.data?.message || "Something went wrong. Please try again.")
@@ -327,8 +374,496 @@ function renderCartPage() {
     });
 
     container.innerHTML = html;
+
     if(totalEl) totalEl.innerText = `₹${total}`;
 }
+
+// Checkout Function
+async function checkout() {
+    const cart = getCart();
+    if (Object.keys(cart).length === 0) {
+        openAlert('error', 'Your cart is empty.');
+        return;
+    }
+    
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+        openAlert('error', 'Please log in to proceed with checkout.');
+        return;
+    }
+
+    try {
+        // Send an API request to the backend /checkout route
+        await axios.post(apiUrl.checkout, { 
+            cart, 
+            userId: currentUser.id,
+            userName: currentUser.name
+        });
+
+        localStorage.removeItem('buykart_cart');
+        openAlert('success', 'Order placed successfully! Thank you for shopping with Buykart.');
+        // Re-render UI to reflect empty cart
+        if (document.getElementById('cart-container')) {
+            renderCartPage();
+        }
+    } catch (error) {
+        console.error("Checkout error:", error.response || error);
+        openAlert('error', error.response?.data?.message || "Checkout failed. Please try again.");
+    }
+}
+
+// --- ADMIN & USER MANAGEMENT FUNCTIONS ---
+
+function loadAdminDashboard() {
+    // Use Promise.all to fetch multiple data points concurrently
+    Promise.all([
+        axios.get(apiUrl.getInventory),
+        axios.get(apiUrl.getOrders),
+        axios.get(apiUrl.getUsers)
+    ]).then(([inventoryRes, ordersRes, usersRes]) => {
+        // Handle Inventory Data
+        const inventory = inventoryRes.data;
+        const productCount = inventory.length;
+        const productCountEl = document.getElementById('product-count');
+        if (productCountEl) {
+            productCountEl.textContent = productCount;
+        }
+        
+        const totalValue = inventory.reduce((sum, item) => sum + (Number(item.price) * Number(item.op_stock)), 0);
+        const totalValueEl = document.getElementById('total-value');
+        if (totalValueEl) {
+            totalValueEl.textContent = `₹${totalValue.toLocaleString('en-IN')}`;
+        }
+
+        // Handle Orders Data
+        const orders = ordersRes.data;
+        const orderCount = orders.length;
+        const orderCountEl = document.getElementById('order-count');
+        if (orderCountEl) {
+            orderCountEl.textContent = orderCount;
+        }
+
+        // Handle Users Data
+        const users = usersRes.data;
+        const userCount = users.length;
+        const userCountEl = document.getElementById('user-count');
+        if (userCountEl) {
+            userCountEl.textContent = userCount;
+        }
+        
+        // Compile Combined Recent Activity
+        const recentActivityEl = document.getElementById('recent-activity-list');
+        if (recentActivityEl) {
+            let activities = [];
+            
+            // Add orders to activity timeline
+            orders.forEach(order => {
+                activities.push({
+                    type: 'order',
+                    timestamp: new Date(order.createdAt).getTime(),
+                    dateObj: new Date(order.createdAt),
+                    data: order
+                });
+            });
+
+            // Add users to activity timeline
+            users.forEach(user => {
+                if (user.createdAt) {
+                    activities.push({
+                        type: 'user',
+                        timestamp: new Date(user.createdAt).getTime(),
+                        dateObj: new Date(user.createdAt),
+                        data: user
+                    });
+                }
+            });
+
+            // Sort descending (newest first) and get top 5
+            activities.sort((a, b) => b.timestamp - a.timestamp);
+            const recentActivities = activities.slice(0, 5);
+
+            if (recentActivities.length === 0) {
+                recentActivityEl.innerHTML = '<p class="text-gray-500 italic">No recent activity to show.</p>';
+            } else {
+                let activityHtml = '';
+                recentActivities.forEach(activity => {
+                    const activityDate = activity.dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    
+                    if (activity.type === 'order') {
+                        const order = activity.data;
+                        const items = Object.values(order.items);
+                        const totalAmount = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+                        
+                        activityHtml += `
+                            <div class="flex items-start gap-4">
+                                <div class="bg-green-100 text-green-600 rounded-full p-2 mt-1">
+                                    <span class="material-icons mi-sm">shopping_bag</span>
+                                </div>
+                                <div>
+                                    <p class="text-gray-800 font-medium">New order placed by <span class="font-bold">${order.userName || 'Unknown'}</span></p>
+                                    <p class="text-sm text-gray-500">Order No: <span class="font-mono uppercase">${order.id.substring(0, 8)}</span> • Total: <span class="font-bold text-gray-800">₹${totalAmount.toLocaleString('en-IN')}</span></p>
+                                    <p class="text-xs text-gray-400 mt-1">${activityDate}</p>
+                                </div>
+                            </div>
+                        `;
+                    } else if (activity.type === 'user') {
+                        const user = activity.data;
+                        activityHtml += `
+                            <div class="flex items-start gap-4">
+                                <div class="bg-blue-100 text-blue-600 rounded-full p-2 mt-1">
+                                    <span class="material-icons mi-sm">person_add</span>
+                                </div>
+                                <div>
+                                    <p class="text-gray-800 font-medium">New user registered: <span class="font-bold">${user.name}</span></p>
+                                    <p class="text-sm text-gray-500">User ID: <span class="font-mono uppercase">${user.id.substring(0, 8)}</span></p>
+                                    <p class="text-xs text-gray-400 mt-1">${activityDate}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                recentActivityEl.innerHTML = activityHtml;
+            }
+        }
+
+        // Render Sales Chart
+        renderSalesChart(orders);
+
+    }).catch(err => {
+        console.error("Could not load dashboard stats", err);
+        // Set all stats to N/A on failure
+        ['product-count', 'total-value', 'order-count', 'user-count'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'N/A';
+        });
+    });
+}
+
+let salesChartInstance = null; // Keep track of chart instance to prevent duplicates
+
+function renderSalesChart(orders) {
+    const ctx = document.getElementById('salesChart');
+    // Ensure Chart.js is loaded and the canvas element exists
+    if (!ctx || typeof Chart === 'undefined') {
+        console.log("Chart.js not ready or canvas not found.");
+        return;
+    };
+
+    // Destroy existing chart if it exists to prevent "Canvas already in use" error
+    if (salesChartInstance) {
+        salesChartInstance.destroy();
+    }
+
+    // 1. Process data for the last 7 days
+    const salesByDay = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Helper to safely format date to local YYYY-MM-DD
+    const getLocalYYYYMMDD = (dateObj) => {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    // Initialize the last 7 days with 0 sales
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const dateString = getLocalYYYYMMDD(date);
+        salesByDay[dateString] = 0;
+    }
+
+    // Populate sales data from orders
+    orders.forEach(order => {
+        const orderDate = new Date(order.createdAt);
+        // Check if the order is within the last 7 days
+        if (orderDate >= new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000)) {
+            const dateString = getLocalYYYYMMDD(orderDate);
+            const totalAmount = Object.values(order.items).reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+            if (salesByDay.hasOwnProperty(dateString)) {
+                salesByDay[dateString] += totalAmount;
+            }
+        }
+    });
+
+    const labels = Object.keys(salesByDay).map(dateStr => {
+        const [year, month, day] = dateStr.split('-');
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    });
+    const data = Object.values(salesByDay);
+
+    // 2. Render the chart
+    salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sales',
+                data: data,
+                borderColor: 'hsl(128, 63%, 21%)', // --color-primary
+                backgroundColor: 'hsla(99, 53%, 86%, 0.5)', // --color-primary-lightest with opacity
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: 'hsl(128, 63%, 21%)',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `Sales: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed.y)}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadOrdersAdmin() {
+    const tableBody = document.getElementById('orders-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">Loading orders...</td></tr>`;
+
+    axios.get(apiUrl.getOrders)
+        .then(response => {
+            const orders = response.data;
+
+            if (orders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No orders have been placed yet.</td></tr>`;
+                return;
+            }
+
+            let rowsHtml = '';
+            orders.forEach(order => {
+                const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                const items = Object.values(order.items);
+                const totalAmount = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+                const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+                rowsHtml += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-mono text-xs text-gray-500 uppercase" title="${order.id}">${order.id.substring(0, 8)}</td>
+                        <td class="p-3 font-medium text-gray-800">${order.userName || 'Unknown'}</td>
+                        <td class="p-3 text-gray-600">${orderDate}</td>
+                        <td class="p-3 font-bold text-gray-800">₹${totalAmount.toLocaleString('en-IN')}</td>
+                        <td class="p-3"><span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">${order.status}</span></td>
+                        <td class="p-3 text-gray-600">${totalItems} item(s)</td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = rowsHtml;
+        })
+        .catch(error => {
+            console.error('Error fetching orders for admin:', error);
+            if(tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">Failed to load orders.</td></tr>`;
+        });
+}
+
+function loadUsersAdmin() {
+    const tableBody = document.getElementById('users-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-500">Loading users...</td></tr>`;
+
+    axios.get(apiUrl.getUsers)
+        .then(response => {
+            const users = response.data;
+
+            if (users.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-500">No users found.</td></tr>`;
+                return;
+            }
+
+            let rowsHtml = '';
+            users.forEach(user => {
+                const registerDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+                rowsHtml += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-medium text-gray-800">${user.name}</td>
+                        <td class="p-3 text-gray-600">${user.phone || 'N/A'}</td>
+                        <td class="p-3 text-gray-600">${registerDate}</td>
+                        <td class="p-3 font-mono text-xs text-gray-400 uppercase" title="${user.id}">${user.id.substring(0, 8)}</td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = rowsHtml;
+        })
+        .catch(error => {
+            console.error('Error fetching users for admin:', error);
+            if(tableBody) tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-500">Failed to load users.</td></tr>`;
+        });
+}
+
+let adminInventoryCache = []; // Cache for editing
+
+function loadInventoryAdmin() {
+    axios.get(apiUrl.getInventory)
+        .then(response => {
+            adminInventoryCache = response.data;
+            const tableBody = document.getElementById('inventory-table-body');
+            if (!tableBody) return;
+
+            if (adminInventoryCache.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">No inventory items found.</td></tr>`;
+                return;
+            }
+
+            let rowsHtml = '';
+            adminInventoryCache.forEach(item => {
+                rowsHtml += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3"><img src="${getProductImageUrl(item)}" alt="${item.itemName}" class="w-12 h-12 object-cover rounded-md"></td>
+                        <td class="p-3 font-medium text-gray-800">${item.itemName}</td>
+                        <td class="p-3 text-gray-600">${item.category}</td>
+                        <td class="p-3 text-gray-600">₹${item.price}</td>
+                        <td class="p-3 text-gray-600">${item.op_stock} ${item.unit}</td>
+                        <td class="p-3">
+                            <div class="flex gap-2">
+                                <button onclick='openEditModal(${JSON.stringify(item)})' class="text-blue-600 hover:text-blue-800 font-semibold">Edit</button>
+                                <button onclick="deleteInventory('${item.id}')" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = rowsHtml;
+        })
+        .catch(error => {
+            console.error('Error fetching inventory for admin:', error);
+            const tableBody = document.getElementById('inventory-table-body');
+            if(tableBody) tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-500">Failed to load inventory.</td></tr>`;
+        });
+}
+
+async function addInventory(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+        await axios.post(apiUrl.addInventory, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        openAlert('success', 'Inventory item added successfully!');
+        form.reset();
+        const preview = form.querySelector('img');
+        if (preview) {
+            preview.src = '';
+            preview.classList.add('hidden');
+        }
+        loadInventoryAdmin(); // Refresh the table
+    } catch (error) {
+        console.error("Add inventory error:", error.response || error);
+        openAlert('error', error.response?.data?.message || "Failed to add item. Please try again.");
+    }
+}
+
+async function deleteInventory(id) {
+    if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) {
+        return;
+    }
+    try {
+        await axios.delete(`${apiUrl.deleteInventory}/${id}`);
+        openAlert('success', 'Item deleted successfully.');
+        loadInventoryAdmin(); // Easiest way to refresh the list
+    } catch (error) {
+        console.error("Delete inventory error:", error.response || error);
+        openAlert('error', error.response?.data?.message || "Failed to delete item.");
+    }
+}
+
+function openEditModal(item) {
+    const modal = document.getElementById('editInventoryModal');
+    const form = document.getElementById('editInventoryForm');
+    if (!modal || !form) return;
+
+    form.dataset.id = item.id; // Store ID for submission
+    form.elements['itemName'].value = item.itemName;
+    form.elements['category'].value = item.category;
+    form.elements['price'].value = item.price;
+    form.elements['op_stock'].value = item.op_stock;
+    form.elements['unit'].value = item.unit;
+    form.elements['description'].value = item.description || '';
+    
+    const preview = document.getElementById('edit-image-preview');
+    if (preview) {
+        preview.src = getProductImageUrl(item);
+        preview.classList.remove('hidden');
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editInventoryModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function updateInventory(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = form.dataset.id;
+    const formData = new FormData(form);
+
+    // If the file input is empty, the backend will not receive a file,
+    // and the controller logic correctly skips updating the image.
+
+    try {
+        await axios.put(`${apiUrl.updateInventory}/${id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        openAlert('success', 'Inventory updated successfully!');
+        closeEditModal();
+        loadInventoryAdmin(); // Refresh table
+    } catch (error) {
+        console.error("Update inventory error:", error.response || error);
+        openAlert('error', error.response?.data?.message || "Failed to update item.");
+    }
+}
+
+async function addUser(e) {
+    e.preventDefault();
+    const form = e.target;
+    const name = form.elements['name'].value;
+    const phone = form.elements['phone'].value;
+    const password = form.elements['password'].value;
+    const confirmPassword = form.elements['confirmPassword'].value;
+
+    if (password !== confirmPassword) {
+        return openAlert('error', 'Passwords do not match.');
+    }
+
+    try {
+        await axios.post(apiUrl.addUser, { name, phone, password });
+        openAlert('success', 'User created successfully! You will be redirected to the login page.');
+        form.reset();
+        setTimeout(() => window.location.href = '/', 2000); // Redirect to login after 2s
+    } catch (error) {
+        console.error("Add user error:", error.response || error);
+        openAlert('error', error.response?.data?.message || "Failed to create user.");
+    }
+}
+
+// --- UTILITY FUNCTIONS ---
 
 function openAlert(type, message) {
     const modal = document.getElementById('alertModal');
@@ -352,25 +887,32 @@ function closeAlert() {
     document.getElementById('alertModal').classList.add('hidden');
 }
 
+// Loader Helper Functions
+function showLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.classList.remove('hidden');
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.classList.add('hidden');
+}
+
 // Axios Interceptors to handle Loader
 if (typeof axios !== 'undefined') {
     axios.interceptors.request.use(function (config) {
-        const loader = document.getElementById('loader');
-        if (loader) loader.classList.remove('hidden');
+        showLoader();
         return config;
     }, function (error) {
-        const loader = document.getElementById('loader');
-        if (loader) loader.classList.add('hidden');
+        hideLoader();
         return Promise.reject(error);
     });
 
     axios.interceptors.response.use(function (response) {
-        const loader = document.getElementById('loader');
-        if (loader) loader.classList.add('hidden');
+        hideLoader();
         return response;
     }, function (error) {
-        const loader = document.getElementById('loader');
-        if (loader) loader.classList.add('hidden');
+        hideLoader();
         return Promise.reject(error);
     });
 }

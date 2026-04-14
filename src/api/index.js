@@ -19,5 +19,8 @@ router.post('/addInventory', upload.single('inventoryImage'), controller.addInve
 router.put('/updateInventory/:id', upload.single('inventoryImage'), controller.updateInventory);
 router.delete('/deleteInventory/:id', controller.deleteInventory);
 router.get('/getInventory', controller.getInventory);
+router.post('/checkout', controller.checkout);
+router.get('/getOrders', controller.getOrders);
+router.get('/getUsers', controller.getUsers);
 
 module.exports = router;

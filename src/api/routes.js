@@ -17,8 +17,12 @@ router.get('/user', (req, res) => {
     res.sendFile(path.join(viewsDir, 'admin/user.html'));
 });
 
-// Serve the main HTML file for the home route
-router.get('/home', (req, res) => {
+router.get('/users', (req, res) => {
+    res.sendFile(path.join(viewsDir, 'admin/users.html'));
+});
+
+// Serve the main HTML file for the dashboard route
+router.get('/dashboard', (req, res) => {
     res.sendFile(path.join(viewsDir, 'layout/index.html'));
 });
 
@@ -30,6 +34,11 @@ router.get('/admin', (req, res) => {
 // Serve the admin page
 router.get('/inventory', (req, res) => {
     res.sendFile(path.join(viewsDir, 'admin/inventory.html'));
+});
+
+// Serve the admin orders page
+router.get('/orders', (req, res) => {
+    res.sendFile(path.join(viewsDir, 'admin/orders.html'));
 });
 
 // Serve the Website page
