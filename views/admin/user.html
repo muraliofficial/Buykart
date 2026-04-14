@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buykart</title>
+    <link rel="shortcut icon" href="public/img/logo(1).png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/public/Css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -29,6 +30,7 @@
                 <button type="submit" class="group flex items-center justify-center gap-x-2 w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                     <span class="text-white text-lg">Sign Up</span>
                 </button>
+                <button type="button" class="btn-sm btn-glass w-full" onclick="goBack()" >Back</button>
             </div>
         </form>
     </section>
@@ -36,6 +38,9 @@
 <script src="/public/Js/style.js"></script>
 
 <script>
+    function goBack() {
+        window.location.href = '/' 
+    }
     function showPassword(passwordField) {
         const passwordInput = document.getElementById("password");
         const confirmPasswordInput = document.getElementById("confirmPassword");

@@ -3,12 +3,15 @@ const path = require('path');
 const fs = require('fs').promises;
 const bcrypt = require('bcryptjs');
 const cloudinary = require('cloudinary').v2;
-const { Readable } = require('stream');
 
 const SALT_ROUNDS = 10;
 const COLLECTION_NAME = 'products';
 
 // Configure Cloudinary
+if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    console.warn("⚠️ Warning: Cloudinary environment variables are missing! Uploads will fail.");
+}
+
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -18,20 +21,16 @@ cloudinary.config({
 // Helper to upload memory buffer to Cloudinary
 const uploadToCloudinary = (buffer) => {
     return new Promise((resolve, reject) => {
-        const writeStream = cloudinary.uploader.upload_stream(
+        cloudinary.uploader.upload_stream(
             { folder: 'buykart_inventory' },
             (err, result) => {
-                if (err) return reject(err);
+                if (err) {
+                    console.error("Cloudinary upload error:", err);
+                    return reject(err);
+                }
                 resolve(result);
             }
-        );
-        const readStream = new Readable({
-            read() {
-                this.push(buffer);
-                this.push(null);
-            }
-        });
-        readStream.pipe(writeStream);
+        ).end(buffer);
     });
 };
 
@@ -235,7 +234,6 @@ exports.deleteProduct = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        console.log('Login Request Body:', req.body);
         const { username, password } = req.body;
         if (!username || !password) {
             return res.status(400).json({ message: "Please enter both username and password" });
@@ -252,6 +250,11 @@ exports.login = async (req, res) => {
         const userDoc = snapshot.docs[0];
         const userData = userDoc.data();
 
+        // Fallback in case an older database entry doesn't have a password field
+        if (!userData.password) {
+            return res.status(401).json({ message: "Invalid username or password" });
+        }
+
         // Securely compare the provided password with the stored hash
         const passwordMatch = await bcrypt.compare(password, userData.password);
         if (!passwordMatch) {
@@ -267,8 +270,11 @@ exports.login = async (req, res) => {
 
 exports.addUser = async (req, res) => {
     try {
-        console.log('Add User Request Body:', req.body);
         const { confirmPassword, ...userData } = req.body; // Exclude confirmPassword
+
+        if (!userData.name || !userData.password) {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
 
         // Check if user already exists
         const usersRef = db.collection('users');
