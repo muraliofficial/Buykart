@@ -5,28 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const controller = require('./controller');
 
-// Configure Multer for disk storage.
-// NOTE: Ensure the destination directory 'public/img/inventory' exists.
-const isVercel = process.env.VERCEL === '1';
-const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
-
-try {
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-    }
-} catch (error) {
-    console.warn("Warning: Could not create upload directory.", error.message);
-}
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    },
-});
+// Use memoryStorage to keep the file in memory (Required for serverless Vercel deployments)
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.post('/products', controller.createProduct);

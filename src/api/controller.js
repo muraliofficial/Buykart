@@ -2,9 +2,38 @@ const { db } = require('./firebase');
 const path = require('path');
 const fs = require('fs').promises;
 const bcrypt = require('bcryptjs');
+const cloudinary = require('cloudinary').v2;
+const { Readable } = require('stream');
 
 const SALT_ROUNDS = 10;
 const COLLECTION_NAME = 'products';
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Helper to upload memory buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const writeStream = cloudinary.uploader.upload_stream(
+            { folder: 'buykart_inventory' },
+            (err, result) => {
+                if (err) return reject(err);
+                resolve(result);
+            }
+        );
+        const readStream = new Readable({
+            read() {
+                this.push(buffer);
+                this.push(null);
+            }
+        });
+        readStream.pipe(writeStream);
+    });
+};
 
 exports.createProduct = async (req, res) => {
     try {
@@ -32,10 +61,11 @@ exports.addInventory = async (req, res) => {
             return res.status(400).json({ message: 'Image is required' });
         }
 
-        // With multer.diskStorage, file is saved locally. We store the relative path.
-        const imageFilename = req.file.filename;
+        // Upload file from memory to Cloudinary
+        const result = await uploadToCloudinary(req.file.buffer);
 
-        const newInventory = { category, itemName, unit, price, op_stock, description, image: imageFilename, createdAt: new Date().toISOString() };
+        // We store the public ID so we can delete the image later if needed
+        const newInventory = { category, itemName, unit, price, op_stock, description, image: result.secure_url, imageId: result.public_id, createdAt: new Date().toISOString() };
 
         await db.collection('inventory').add(newInventory);
         res.status(200).json({ message: 'Inventory added successfully', data: newInventory });
@@ -57,25 +87,33 @@ exports.updateInventory = async (req, res) => {
         updateData.updatedAt = new Date().toISOString();
         
         if (req.file) {
-            // A new file is uploaded, update the image field and delete the old one.
-            updateData.image = req.file.filename;
+            // Upload new image to Cloudinary
+            const result = await uploadToCloudinary(req.file.buffer);
+            updateData.image = result.secure_url;
+            updateData.imageId = result.public_id;
             
             // Fetch the old document to get the old image path for deletion.
             const docRef = db.collection('inventory').doc(id);
             const doc = await docRef.get();
             if (doc.exists && doc.data().image) {
                 const oldImage = doc.data().image;
-                // Avoid trying to delete Firebase Storage URLs from the local filesystem
-                if (!oldImage.startsWith('http')) {
-                    // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
+                const oldImageId = doc.data().imageId;
+                
+                if (oldImageId) {
+                    try {
+                        await cloudinary.uploader.destroy(oldImageId);
+                    } catch (e) {
+                        console.error("Error deleting old Cloudinary image:", e.message);
+                    }
+                } else if (!oldImage.startsWith('http')) {
+                    // Fallback for deleting local files during local dev
                     const cleanName = oldImage.replace(/^inventory[\\/]/, '');
-                    const isVercel = process.env.VERCEL === '1';
-                    const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
+                    const uploadDir = process.env.VERCEL === '1' ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
                     const oldImagePath = path.join(uploadDir, cleanName);
                     try {
                         await fs.unlink(oldImagePath);
                     } catch (e) {
-                        console.error("Error deleting old image file:", e.message);
+                        console.error("Error deleting old local image:", e.message);
                     }
                 }
             }
@@ -103,18 +141,20 @@ exports.deleteInventory = async (req, res) => {
 
         // 2. Delete image file from Storage
         if (data.image) {
-            // If it's a local file path (not a URL), delete it from the server.
-            if (!data.image.startsWith('http')) {
+            if (data.imageId) {
                 try {
-                    // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
+                    await cloudinary.uploader.destroy(data.imageId);
+                } catch (e) {
+                    console.log("Error deleting Cloudinary image:", e.message);
+                }
+            } else if (!data.image.startsWith('http')) {
+                try {
                     const cleanName = data.image.replace(/^inventory[\\/]/, '');
-                        const isVercel = process.env.VERCEL === '1';
-                        const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
-                        const imagePath = path.join(uploadDir, cleanName);
+                    const uploadDir = process.env.VERCEL === '1' ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
+                    const imagePath = path.join(uploadDir, cleanName);
                     await fs.unlink(imagePath);
                 } catch (e) {
-                    // Log error but don't block DB deletion if file is already gone.
-                    console.log("Error deleting image file, it might not exist:", e.message);
+                    console.log("Error deleting local image file, it might not exist:", e.message);
                 }
             }
         }

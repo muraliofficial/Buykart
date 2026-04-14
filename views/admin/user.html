@@ -85,6 +85,7 @@ async function saveUser(userDetails) {
         const response = await axios.post('/addUser', userDetails);
         openAlert('success', 'User created successfully!');
         resetNewUserForm();
+        window.location.href = '/login'
     } catch (error) {
         console.error('Error adding user:', error);
         openAlert('error', error.response?.data?.message || 'Failed to create user');
