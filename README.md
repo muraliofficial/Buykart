@@ -27,8 +27,8 @@ Buykart is a robust web-based inventory management application designed to strea
 
 1.  **Clone the repository:**
     ```bash
-    git clone gh repo clone muraliofficial/Buykart
-    cd Buykart
+    git clone https://github.com/muraliofficial/Buykart.git
+    cd Buykart # Navigate into the project directory
     ```
 
 2.  **Install Dependencies:**
@@ -49,4 +49,3 @@ Buykart is a robust web-based inventory management application designed to strea
 *   `views/`: Frontend HTML files.
 *   `public/`: Static assets (CSS, JS, Images).
 *   `credentials.json`: Firebase authentication keys (Ignored by Git).
-

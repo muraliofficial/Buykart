@@ -8,6 +8,11 @@ const port = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Fix for Vercel/Deployed environments: Serve images from /tmp if deployed
+const isVercel = process.env.VERCEL === '1';
+const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../public/img/inventory');
+app.use('/public/img/inventory', express.static(uploadDir));
+
 // Serve static files (CSS, JS, Images) from the 'public' directory
 app.use('/public', express.static(path.join(__dirname, '../public')));
 

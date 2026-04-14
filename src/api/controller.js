@@ -1,7 +1,9 @@
 const { db } = require('./firebase');
 const path = require('path');
 const fs = require('fs').promises;
+const bcrypt = require('bcryptjs');
 
+const SALT_ROUNDS = 10;
 const COLLECTION_NAME = 'products';
 
 exports.createProduct = async (req, res) => {
@@ -23,7 +25,7 @@ exports.addInventory = async (req, res) => {
         
         // Basic validation
         if (!itemName || !unit || !price || !op_stock || !category) {
-            return res.status(400).json({ message: 'Please provide itemName, unit, price, and opening stock.' });
+            return res.status(400).json({ message: 'Please provide category, itemName, unit, price, and opening stock.' });
         }
 
         if (!req.file) {
@@ -47,16 +49,13 @@ exports.updateInventory = async (req, res) => {
         const { id } = req.params;
         const {  category, itemName, unit, price, op_stock, description } = req.body;
         
-        let updateData = {
-            category,
-            itemName,
-            unit,
-            price,
-            op_stock,
-            description,
-            updatedAt: new Date().toISOString()
-        };
+        const updateData = { category, itemName, unit, price, op_stock, description };
 
+        // Remove undefined properties so they don't overwrite existing fields in Firestore
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+        updateData.updatedAt = new Date().toISOString();
+        
         if (req.file) {
             // A new file is uploaded, update the image field and delete the old one.
             updateData.image = req.file.filename;
@@ -70,7 +69,9 @@ exports.updateInventory = async (req, res) => {
                 if (!oldImage.startsWith('http')) {
                     // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
                     const cleanName = oldImage.replace(/^inventory[\\/]/, '');
-                    const oldImagePath = path.join(__dirname, '../../public/img/inventory', cleanName);
+                    const isVercel = process.env.VERCEL === '1';
+                    const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
+                    const oldImagePath = path.join(uploadDir, cleanName);
                     try {
                         await fs.unlink(oldImagePath);
                     } catch (e) {
@@ -107,7 +108,9 @@ exports.deleteInventory = async (req, res) => {
                 try {
                     // Normalize path: ensure we look in 'public/img/inventory' whether prefix exists or not
                     const cleanName = data.image.replace(/^inventory[\\/]/, '');
-                    const imagePath = path.join(__dirname, '../../public/img/inventory', cleanName);
+                        const isVercel = process.env.VERCEL === '1';
+                        const uploadDir = isVercel ? '/tmp' : path.join(__dirname, '../../public/img/inventory');
+                        const imagePath = path.join(uploadDir, cleanName);
                     await fs.unlink(imagePath);
                 } catch (e) {
                     // Log error but don't block DB deletion if file is already gone.
@@ -168,10 +171,12 @@ exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const data = req.body;
-        await db.collection(COLLECTION_NAME).doc(id).update({
-            ...data,
-            updatedAt: new Date().toISOString()
-        });
+        const updateData = { ...data };
+
+        // Remove undefined properties to support partial updates
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+        updateData.updatedAt = new Date().toISOString();
+        await db.collection(COLLECTION_NAME).doc(id).update(updateData);
         res.status(200).json({ message: 'Product updated successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -204,11 +209,12 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
-        // Check password (Note: In production, use bcrypt to compare hashed passwords)
         const userDoc = snapshot.docs[0];
         const userData = userDoc.data();
 
-        if (userData.password !== password) {
+        // Securely compare the provided password with the stored hash
+        const passwordMatch = await bcrypt.compare(password, userData.password);
+        if (!passwordMatch) {
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
@@ -232,8 +238,12 @@ exports.addUser = async (req, res) => {
             return res.status(409).json({ message: 'User already exists' });
         }
 
+        // Hash the password before storing it
+        const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
+
         const docRef = await db.collection('users').add({
             ...userData,
+            password: hashedPassword,
             createdAt: new Date().toISOString()
         });
         res.status(200).json({ message: 'User added successfully', id: docRef.id });

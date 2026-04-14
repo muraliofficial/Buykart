@@ -141,10 +141,10 @@ let globalProductMap = {}; // Store products for easy access
 function getProductData() {
     axios.get(apiUrl.getInventory)
         .then(response => {
-            const products = response.data.inventory || response.data;
+            const products = response.data;
             const productGrid = document.getElementById('product-grid');
             
-            // Populate global map
+            // Populate global map for easy access in cart functions
             products.forEach(p => globalProductMap[p.id] = p);
             
             if (!productGrid) return;
@@ -164,7 +164,7 @@ function getProductData() {
                 cardsHtml += `
                     <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-300 overflow-hidden border border-gray-100 group flex flex-col h-full">
                         <div class="relative h-48 overflow-hidden bg-gray-50">
-                            <img src="${product.image.startsWith('http') ? product.image : '/public/img/inventory/' + product.image.replace('inventory/', '')}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <img src="${getProductImageUrl(product)}" alt="${product.itemName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-primary shadow-sm">
                                 ${product.category}
                             </div>
@@ -189,6 +189,18 @@ function getProductData() {
             const productGrid = document.getElementById('product-grid');
             if(productGrid) productGrid.innerHTML = '<div class="col-span-full text-center text-red-500 py-10">Failed to load products. Please try again later.</div>';
         });
+}
+
+/**
+ * Generates the correct, full image URL for a product.
+ * Handles local vs. remote images and normalizes local paths.
+ * @param {object} product - The product object which contains an 'image' property.
+ * @returns {string} The full, usable image URL.
+ */
+function getProductImageUrl(product) {
+    if (!product || !product.image) return '/public/img/placeholder.png'; // Return a placeholder if no image
+    if (product.image.startsWith('http')) return product.image; // It's already a full URL
+    return `/public/img/inventory/${product.image.replace(/^inventory[\\/]/, '')}`; // Construct local path
 }
 
 function generateButtonHtml(id, qty) {
@@ -293,7 +305,7 @@ function renderCartPage() {
             <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm mb-4">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden">
-                        <img src="${item.image.startsWith('http') ? item.image : '/public/img/inventory/' + item.image.replace('inventory/', '')}" class="w-full h-full object-cover">
+                        <img src="${getProductImageUrl(item)}" alt="${item.itemName}" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">${item.itemName}</h3>
