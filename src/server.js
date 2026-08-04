@@ -30,14 +30,14 @@ app.get('*', (req, res) => {
     if (require('fs').existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).sendFile(path.join(__dirname, '../404.html'));
+        res.status(404).send('Application build missing or page not found.');
     }
 });
 
 // Handle 500 - Internal Server Error
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).sendFile(path.join(__dirname, '../500.html'));
+    res.status(500).send('Internal Server Error.');
 });
 
 app.listen(port, () => {
