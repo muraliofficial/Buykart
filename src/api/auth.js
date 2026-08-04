@@ -1,4 +1,4 @@
-const {QH, admin} = require('./firebase');
+const { admin } = require('./firebase');
 
 // Initialize Auth service
 const auth = admin.auth();

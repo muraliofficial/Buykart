@@ -20,12 +20,17 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 // Use API routes
 app.use('/', routes);
 
-// Handle 404 - Page Not Found
-app.use((req, res) => {
-    if (req.accepts('html')) {
-        res.status(404).sendFile(path.join(__dirname, '../404.html'));
+// Serve built React app from 'dist'
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Fallback to React index.html for client-side routing
+app.get('*', (req, res) => {
+    const indexPath = path.join(distPath, 'index.html');
+    if (require('fs').existsSync(indexPath)) {
+        res.sendFile(indexPath);
     } else {
-        res.status(404).json({ message: "Endpoint not found" });
+        res.status(404).sendFile(path.join(__dirname, '../404.html'));
     }
 });
 

@@ -5,9 +5,11 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node ./src/server.js",
-    "build:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css",
-    "watch:css": "tailwindcss -i ./src/ui/input.css -o ./public/Css/style.css --watch",
-    "dev": "concurrently \"npm run watch:css\" \"npm run start\""
+    "dev:server": "node ./src/server.js",
+    "dev:client": "vite",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
@@ -20,15 +22,24 @@
     "@tailwindcss/cli": "^4.1.18",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
+    "chart.js": "^4.5.1",
     "cloudinary": "^2.9.0",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "firebase-admin": "^13.8.0",
     "googleapis": "^169.0.0",
-    "multer": "^2.1.1"
+    "lucide-react": "^1.28.0",
+    "multer": "^2.1.1",
+    "react": "^19.2.8",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.0.5",
     "concurrently": "^9.2.1",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "vite": "^8.2.0"
   }
 }
