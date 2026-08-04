@@ -1,18 +1,15 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "src/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["dist/**", "public/**"]
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/server.js"
-    }
+  "rewrites": [
+    { "source": "/products(.*)", "destination": "/api/index.js" },
+    { "source": "/login(.*)", "destination": "/api/index.js" },
+    { "source": "/addUser(.*)", "destination": "/api/index.js" },
+    { "source": "/addInventory(.*)", "destination": "/api/index.js" },
+    { "source": "/updateInventory(.*)", "destination": "/api/index.js" },
+    { "source": "/deleteInventory(.*)", "destination": "/api/index.js" },
+    { "source": "/getInventory(.*)", "destination": "/api/index.js" },
+    { "source": "/checkout(.*)", "destination": "/api/index.js" },
+    { "source": "/getOrders(.*)", "destination": "/api/index.js" },
+    { "source": "/getUsers(.*)", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
