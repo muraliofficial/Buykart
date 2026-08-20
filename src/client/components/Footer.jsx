@@ -37,21 +37,21 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Admin Links */}
+          {/* Customer Portal Links */}
           <div>
-            <h4 className="text-white font-bold text-base mb-4">Admin Portal</h4>
+            <h4 className="text-white font-bold text-base mb-4">Customer Services</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link to="/dashboard" className="hover:text-emerald-400 transition">Admin Dashboard</Link>
+                <Link to="/account" className="hover:text-emerald-400 transition">My Profile & Account</Link>
               </li>
               <li>
-                <Link to="/inventory" className="hover:text-emerald-400 transition">Manage Inventory</Link>
+                <Link to="/my-orders" className="hover:text-emerald-400 transition">My Orders & Live Tracking</Link>
               </li>
               <li>
-                <Link to="/orders" className="hover:text-emerald-400 transition">Customer Orders</Link>
+                <Link to="/cart" className="hover:text-emerald-400 transition">Shopping Cart & Checkout</Link>
               </li>
               <li>
-                <Link to="/login" className="hover:text-emerald-400 transition">Admin Login</Link>
+                <Link to="/contact" className="hover:text-emerald-400 transition">Customer Help & Support</Link>
               </li>
             </ul>
           </div>
@@ -74,11 +74,27 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Buykart Inc. All rights reserved.</p>
-          <p className="flex items-center gap-1">
-            Built with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> for quality grocery shopping.
-          </p>
+        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 gap-4">
+          <div className="flex items-center gap-2">
+            <span className="bg-emerald-500/10 text-emerald-400 font-extrabold px-2.5 py-1 rounded-md border border-emerald-500/20">
+              Buykart Ecosystem v2.5.0
+            </span>
+            <span>© {new Date().getFullYear()} Buykart Inc. All rights reserved.</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 font-semibold text-slate-300">
+            <span>Crafted with</span>
+            <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" />
+            <span>by</span>
+            <a
+              href="http://my-self-murali.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 font-extrabold underline hover:text-emerald-300 transition"
+            >
+              Murali (App Creator)
+            </a>
+          </div>
         </div>
       </div>
     </footer>

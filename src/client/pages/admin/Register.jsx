@@ -36,7 +36,7 @@ const Register = () => {
     const res = await register(formData);
     if (res.success) {
       setSuccessMsg('Account created successfully! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/admin/login'), 2000);
     } else {
       setErrorMsg(res.message);
     }
@@ -46,7 +46,7 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#0D4715] via-[#1b5e20] to-[#41644A] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl space-y-6">
         <div className="flex items-center justify-between">
-          <Link to="/login" className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-bold">
+          <Link to="/admin/login" className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-bold">
             <ArrowLeft className="w-4 h-4" /> Back to Login
           </Link>
           <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">New User</span>

@@ -5,7 +5,8 @@ import { useAuth } from './AuthContext';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { customer } = useAuth();
+  const activeUser = customer;
 
   const [cart, setCart] = useState(() => {
     try {
@@ -77,20 +78,24 @@ export const CartProvider = ({ children }) => {
     return Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  const checkout = async () => {
+  const checkout = async (shippingDetails = {}) => {
     if (Object.keys(cart).length === 0) {
       return { success: false, message: 'Your cart is empty.' };
     }
 
-    if (!currentUser) {
+    if (!activeUser) {
       return { success: false, message: 'Please log in to complete checkout.' };
     }
 
     try {
-      const response = await axios.post('/checkout', {
+      const response = await axios.post('/website/checkout', {
         cart,
-        userId: currentUser.id || currentUser.name,
-        userName: currentUser.name,
+        userId: activeUser.id || activeUser.name,
+        userName: activeUser.name,
+        customerId: customer?.id || activeUser.id || null,
+        customerName: activeUser.name || shippingDetails.fullName,
+        customerMobile: activeUser.mobile || activeUser.phone || shippingDetails.phone,
+        shippingDetails,
       });
 
       clearCart();

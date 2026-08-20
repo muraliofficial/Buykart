@@ -274,7 +274,11 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
-        res.status(200).json({ message: 'Login successful', user: { id: userDoc.id, name: userData.name, phone: userData.phone } });
+        const role = userData.role || (userData.name && userData.name.toLowerCase() === 'admin' ? 'admin' : 'customer');
+        res.status(200).json({
+            message: 'Login successful',
+            user: { id: userDoc.id, name: userData.name, phone: userData.phone, role }
+        });
     } catch (error) {
         console.error('Login Error:', error);
         res.status(500).json({ message: error.message });
@@ -300,8 +304,11 @@ exports.addUser = async (req, res) => {
         // Hash the password before storing it
         const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
 
+        const role = userData.role || (userData.name.toLowerCase() === 'admin' ? 'admin' : 'customer');
+
         const docRef = await db.collection('users').add({
             ...userData,
+            role,
             password: hashedPassword,
             createdAt: new Date().toISOString()
         });
@@ -321,6 +328,7 @@ exports.getUsers = async (req, res) => {
                 id: doc.id,
                 name: data.name,
                 phone: data.phone,
+                role: data.role || (data.name && data.name.toLowerCase() === 'admin' ? 'admin' : 'customer'),
                 createdAt: data.createdAt
             };
         });
@@ -347,26 +355,405 @@ exports.getOrders = async (req, res) => {
 
 exports.checkout = async (req, res) => {
     try {
-        const { cart, userId, userName } = req.body;
+        const { cart, userId, userName, shippingDetails } = req.body;
 
         if (!cart || Object.keys(cart).length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
 
-        // Create an order record
+        const itemsList = Object.values(cart);
+
+        // 1. Verify Stock availability
+        for (const item of itemsList) {
+            if (item.id) {
+                const itemDoc = await db.collection('inventory').doc(item.id).get();
+                if (itemDoc.exists) {
+                    const currentStock = Number(itemDoc.data().op_stock || 0);
+                    if (currentStock < item.quantity) {
+                        return res.status(400).json({
+                            message: `Insufficient stock for "${item.itemName}". Available: ${currentStock}, Requested: ${item.quantity}`
+                        });
+                    }
+                }
+            }
+        }
+
+        // 2. Decrement Stock
+        for (const item of itemsList) {
+            if (item.id) {
+                const itemRef = db.collection('inventory').doc(item.id);
+                const itemDoc = await itemRef.get();
+                if (itemDoc.exists) {
+                    const currentStock = Number(itemDoc.data().op_stock || 0);
+                    const newStock = Math.max(0, currentStock - item.quantity);
+                    await itemRef.update({ op_stock: newStock });
+                }
+            }
+        }
+
+        // 3. Create Order Record
         const orderData = {
-            userId: userId || 'UnknownUser', // Prevent Firestore crash if userId is undefined
+            userId: userId || 'UnknownUser',
             userName: userName || 'Unknown',
             items: cart,
-            status: "Completed",
+            shippingDetails: shippingDetails || {},
+            status: "Pending",
             createdAt: new Date().toISOString()
         };
         
-        await db.collection('orders').add(orderData);
+        const docRef = await db.collection('orders').add(orderData);
 
-        res.status(200).json({ message: "Order placed successfully" });
+        res.status(200).json({ message: "Order placed successfully!", orderId: docRef.id });
     } catch (error) {
         console.error("Checkout Error:", error);
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.updateOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, failureReason, packingRemarks, packedItems } = req.body;
+        if (!status) {
+            return res.status(400).json({ message: "Status is required" });
+        }
+        const updateObj = {
+            status,
+            updatedAt: new Date().toISOString()
+        };
+        if (failureReason !== undefined) updateObj.failureReason = failureReason;
+        if (packingRemarks !== undefined) updateObj.packingRemarks = packingRemarks;
+        if (packedItems !== undefined) updateObj.packedItems = packedItems;
+
+        await db.collection('orders').doc(id).update(updateObj);
+        res.status(200).json({ message: "Order status updated successfully" });
+    } catch (error) {
+        console.error("Update Order Status Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// --- CUSTOMER OTP & PROFILE API ---
+exports.customerSendOtp = async (req, res) => {
+    try {
+        const { mobile } = req.body;
+        if (!mobile || mobile.length < 10) {
+            return res.status(400).json({ message: "Valid mobile number is required" });
+        }
+        // Simulated 4-digit OTP
+        const otp = "1234";
+        console.log(`[OTP Simulated] Customer Mobile: ${mobile}, OTP: ${otp}`);
+        res.status(200).json({ message: "OTP sent successfully", otp });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.customerVerifyOtp = async (req, res) => {
+    try {
+        const { mobile, otp } = req.body;
+        if (!mobile || !otp) {
+            return res.status(400).json({ message: "Mobile number and OTP are required" });
+        }
+        if (otp !== "1234") {
+            return res.status(400).json({ message: "Invalid OTP. Please use 1234 for test login." });
+        }
+        
+        // Search customer by mobile
+        const snapshot = await db.collection('customers').where('mobile', '==', mobile).get();
+        if (snapshot.empty) {
+            return res.status(200).json({
+                message: "OTP verified. New customer profile required.",
+                isNew: true,
+                mobile
+            });
+        }
+
+        const customerDoc = snapshot.docs[0];
+        const customerData = customerDoc.data();
+        
+        // Check if profile details are incomplete
+        const isComplete = Boolean(customerData.name && customerData.name.trim() !== '');
+
+        res.status(200).json({
+            message: "Login successful",
+            isNew: !isComplete,
+            customer: { id: customerDoc.id, ...customerData }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateCustomerProfile = async (req, res) => {
+    try {
+        const { id, name, mobile, email, addresses } = req.body;
+        if (!mobile) {
+            return res.status(400).json({ message: "Mobile number is required" });
+        }
+
+        let docId = id;
+        if (!docId) {
+            // Find existing doc by mobile if id not given
+            const snap = await db.collection('customers').where('mobile', '==', mobile).get();
+            if (!snap.empty) {
+                docId = snap.docs[0].id;
+            }
+        }
+
+        const customerPayload = {
+            name: name || '',
+            mobile,
+            email: email || '',
+            addresses: addresses || [],
+            updatedAt: new Date().toISOString()
+        };
+
+        if (docId) {
+            await db.collection('customers').doc(docId).update(customerPayload);
+            res.status(200).json({ message: "Profile updated successfully", customer: { id: docId, ...customerPayload } });
+        } else {
+            customerPayload.createdAt = new Date().toISOString();
+            const docRef = await db.collection('customers').add(customerPayload);
+            res.status(201).json({ message: "Profile created successfully", customer: { id: docRef.id, ...customerPayload } });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getCustomerProfile = async (req, res) => {
+    try {
+        const { idOrMobile } = req.params;
+        let doc = await db.collection('customers').doc(idOrMobile).get();
+        if (doc.exists) {
+            return res.status(200).json({ id: doc.id, ...doc.data() });
+        }
+        
+        const snap = await db.collection('customers').where('mobile', '==', idOrMobile).get();
+        if (!snap.empty) {
+            return res.status(200).json({ id: snap.docs[0].id, ...snap.docs[0].data() });
+        }
+        
+        res.status(404).json({ message: "Customer not found" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// --- RIDER MASTER & RIDER AUTH API ---
+exports.riderVerifyOtp = async (req, res) => {
+    try {
+        const { mobile, otp } = req.body;
+        if (!mobile || !otp) {
+            return res.status(400).json({ message: "Mobile number and OTP are required" });
+        }
+        if (otp !== "1234") {
+            return res.status(400).json({ message: "Invalid OTP. Use 1234 for testing." });
+        }
+
+        // Query riders collection
+        const snap = await db.collection('riders').where('mobile', '==', mobile).get();
+        if (snap.empty) {
+            return res.status(403).json({ message: "No Rider account found with this mobile number. Riders can only be registered by Admin." });
+        }
+
+        const riderDoc = snap.docs[0];
+        const riderData = riderDoc.data();
+
+        if (riderData.status && riderData.status.toLowerCase() === 'inactive') {
+            return res.status(403).json({ message: "Your rider account is deactivated. Please contact Admin." });
+        }
+
+        res.status(200).json({
+            message: "Rider login successful",
+            rider: { id: riderDoc.id, ...riderData }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getRiders = async (req, res) => {
+    try {
+        const snap = await db.collection('riders').get();
+        const riders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.status(200).json(riders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.addRider = async (req, res) => {
+    try {
+        const { name, mobile, bikeNumber, rcNumber, licenseNumber, status } = req.body;
+        if (!name || !mobile) {
+            return res.status(400).json({ message: "Rider name and mobile number are required" });
+        }
+        
+        // Check duplicate mobile
+        const snap = await db.collection('riders').where('mobile', '==', mobile).get();
+        if (!snap.empty) {
+            return res.status(400).json({ message: "A rider with this mobile number already exists" });
+        }
+
+        const newRider = {
+            name,
+            mobile,
+            bikeNumber: bikeNumber || '',
+            rcNumber: rcNumber || '',
+            licenseNumber: licenseNumber || '',
+            status: status || 'Active',
+            createdAt: new Date().toISOString()
+        };
+
+        const docRef = await db.collection('riders').add(newRider);
+        res.status(201).json({ message: "Rider account created successfully", rider: { id: docRef.id, ...newRider } });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateRider = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        data.updatedAt = new Date().toISOString();
+
+        await db.collection('riders').doc(id).update(data);
+        res.status(200).json({ message: "Rider details updated successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// --- PACKING & DISPATCH MODULE APIS ---
+exports.packOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { packedItems, packingRemarks } = req.body;
+        
+        await db.collection('orders').doc(id).update({
+            status: "Packed",
+            packedItems: packedItems || [],
+            packingRemarks: packingRemarks || '',
+            packedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        res.status(200).json({ message: "Order marked as Packed successfully!" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.dispatchOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { riderId, riderName, riderMobile, vehicleDetails, dispatchTime } = req.body;
+        
+        if (!riderId) {
+            return res.status(400).json({ message: "Assigned Rider selection is required" });
+        }
+
+        await db.collection('orders').doc(id).update({
+            status: "Dispatched",
+            assignedRiderId: riderId,
+            assignedRiderName: riderName || '',
+            assignedRiderMobile: riderMobile || '',
+            vehicleDetails: vehicleDetails || '',
+            dispatchTime: dispatchTime || new Date().toLocaleTimeString(),
+            dispatchedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+
+        res.status(200).json({ message: "Order dispatched and Rider assigned successfully!" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getRiderOrders = async (req, res) => {
+    try {
+        const { riderId } = req.params;
+        const snap = await db.collection('orders').get();
+        const allOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filter by assignedRiderId or assignedRiderMobile
+        const riderOrders = allOrders.filter(o => o.assignedRiderId === riderId || o.assignedRiderMobile === riderId);
+        res.status(200).json(riderOrders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateRiderOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, failureReason } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({ message: "Status is required" });
+        }
+
+        const updateData = {
+            status,
+            updatedAt: new Date().toISOString()
+        };
+        if (failureReason) updateData.failureReason = failureReason;
+
+        await db.collection('orders').doc(id).update(updateData);
+        res.status(200).json({ message: `Order status updated to ${status}` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// --- STOCK INWARD / PURCHASE ENTRY API ---
+exports.createPurchaseEntry = async (req, res) => {
+    try {
+        const { vendorName, invoiceNo, date, productId, productName, purchaseRate, quantity, totalCost, remarks } = req.body;
+        
+        if (!vendorName || !productId || !quantity) {
+            return res.status(400).json({ message: "Vendor name, product selection, and quantity are required" });
+        }
+
+        const purchaseRecord = {
+            vendorName,
+            invoiceNo: invoiceNo || `INV-${Date.now()}`,
+            date: date || new Date().toISOString().split('T')[0],
+            productId,
+            productName: productName || 'Product',
+            purchaseRate: Number(purchaseRate || 0),
+            quantity: Number(quantity || 0),
+            totalCost: Number(totalCost || (Number(purchaseRate || 0) * Number(quantity || 0))),
+            remarks: remarks || '',
+            createdAt: new Date().toISOString()
+        };
+
+        const docRef = await db.collection('purchases').add(purchaseRecord);
+
+        // Update product opening stock (op_stock) in inventory collection
+        const itemRef = db.collection('inventory').doc(productId);
+        const itemDoc = await itemRef.get();
+        if (itemDoc.exists) {
+            const currentStock = Number(itemDoc.data().op_stock || 0);
+            const updatedStock = currentStock + Number(quantity);
+            await itemRef.update({ op_stock: updatedStock });
+        }
+
+        res.status(201).json({ message: "Stock Inward Purchase recorded & inventory stock updated!", id: docRef.id });
+    } catch (error) {
+        console.error("Purchase Entry Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getPurchases = async (req, res) => {
+    try {
+        const snap = await db.collection('purchases').orderBy('createdAt', 'desc').get();
+        const purchases = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.status(200).json(purchases);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

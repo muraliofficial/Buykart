@@ -1,26 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const controller = require('./controller');
 
-// Use memoryStorage to keep the file in memory (Required for serverless Vercel deployments)
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const websiteRoutes = require('./website/websiteRoutes');
+const adminRoutes = require('./admin/adminRoutes');
+const ontimeRoutes = require('./ontime/ontimeRoutes');
 
-router.post('/products', controller.createProduct);
-router.get('/products', controller.getAllProducts);
-router.get('/products/:id', controller.getProductById);
-router.put('/products/:id', controller.updateProduct);
-router.delete('/products/:id', controller.deleteProduct);
+// 1. App-wise Prefixed API Endpoints
+router.use('/website', websiteRoutes);
+router.use('/admin', adminRoutes);
+router.use('/ontime', ontimeRoutes);
 
-router.post('/login', controller.login);
-router.post('/addUser', controller.addUser);
-router.post('/addInventory', upload.single('inventoryImage'), controller.addInventory);
-router.put('/updateInventory/:id', upload.single('inventoryImage'), controller.updateInventory);
-router.delete('/deleteInventory/:id', controller.deleteInventory);
-router.get('/getInventory', controller.getInventory);
-router.post('/checkout', controller.checkout);
-router.get('/getOrders', controller.getOrders);
-router.get('/getUsers', controller.getUsers);
+// 2. Fallback Root Mounting for backward compatibility
+router.use('/', websiteRoutes);
 
 module.exports = router;

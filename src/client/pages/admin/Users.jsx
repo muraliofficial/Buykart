@@ -10,11 +10,12 @@ const Users = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/getUsers');
-      setUsers(response.data || []);
+      const response = await axios.get('/admin/getUsers');
+      setUsers(Array.isArray(response.data) ? response.data : []);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching users:', err);
+      setUsers([]);
       setLoading(false);
     }
   };
@@ -23,7 +24,9 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter((u) => {
+  const safeUsers = Array.isArray(users) ? users : [];
+
+  const filteredUsers = safeUsers.filter((u) => {
     const matchesName = u.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPhone = u.phone?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesName || matchesPhone;
@@ -105,7 +108,7 @@ const Users = () => {
                         <span>{user.name}</span>
                         <UserCheck className="w-4 h-4 text-emerald-600" />
                       </td>
-                      <td className="p-4 text-slate-600 font-medium">{user.phone || 'N/A'}</td>
+                      <td className="p-4 text-slate-600 font-medium">{user.phone || user.mobile || 'N/A'}</td>
                       <td className="p-4 text-slate-500 text-xs">{regDate}</td>
                       <td className="p-4 font-mono text-xs text-slate-400 uppercase">
                         {user.id?.substring(0, 8)}

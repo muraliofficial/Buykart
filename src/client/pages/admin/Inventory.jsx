@@ -29,8 +29,8 @@ const Inventory = () => {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/getInventory');
-      setItems(response.data || []);
+      const response = await axios.get('/admin/inventory');
+      setItems(Array.isArray(response.data) ? response.data : []);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching inventory:', err);
@@ -109,12 +109,12 @@ const Inventory = () => {
 
     try {
       if (editingItem) {
-        await axios.put(`/updateInventory/${editingItem.id}`, data, {
+        await axios.put(`/admin/inventory/${editingItem.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         showAlert('success', 'Inventory updated successfully!');
       } else {
-        await axios.post('/addInventory', data, {
+        await axios.post('/admin/inventory', data, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         showAlert('success', 'Inventory added successfully!');
@@ -136,7 +136,7 @@ const Inventory = () => {
     }
 
     try {
-      await axios.delete(`/deleteInventory/${id}`);
+      await axios.delete(`/admin/inventory/${id}`);
       showAlert('success', 'Item deleted successfully.');
       fetchInventory();
     } catch (err) {
@@ -206,7 +206,7 @@ const Inventory = () => {
         </div>
 
         <div className="flex gap-2 overflow-x-auto w-full sm:w-auto">
-          {['All', 'Fruits', 'Vegetables', 'Vegitables'].map((cat) => (
+          {['All', 'Fruits', 'Vegetables'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -214,7 +214,7 @@ const Inventory = () => {
                 selectedCategory === cat ? 'bg-[#0D4715] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {cat === 'Vegitables' ? 'Vegetables' : cat}
+              {cat}
             </button>
           ))}
         </div>
@@ -229,35 +229,51 @@ const Inventory = () => {
           </div>
         ) : filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
-              >
-                {/* Product Image */}
-                <div className="relative h-44 bg-slate-50 overflow-hidden">
-                  <img
-                    src={getProductImageUrl(item)}
-                    alt={item.itemName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=500&q=80';
-                    }}
-                  />
-                  <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                    {item.category || 'Grocery'}
-                  </div>
-                </div>
+            {filteredItems.map((item) => {
+              const stockNum = Number(item.op_stock || 0);
+              const isLowStock = stockNum > 0 && stockNum <= 5;
+              const isOutOfStock = stockNum <= 0;
 
-                {/* Content */}
-                <div className="p-4 flex flex-col flex-grow space-y-2">
-                  <h3 className="font-bold text-slate-900 text-base line-clamp-1">{item.itemName}</h3>
-                  <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
-                    <span>Price: <strong className="text-[#0D4715] text-sm">₹{item.price}</strong> / {item.unit}</span>
-                    <span>Stock: <strong className="text-slate-800">{item.op_stock}</strong></span>
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
+                >
+                  {/* Product Image */}
+                  <div className="relative h-44 bg-slate-50 overflow-hidden">
+                    <img
+                      src={getProductImageUrl(item)}
+                      alt={item.itemName}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=500&q=80';
+                      }}
+                    />
+                    <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
+                      {item.category || 'Grocery'}
+                    </div>
+
+                    {isOutOfStock && (
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-md shadow-xs">
+                        Out of Stock
+                      </div>
+                    )}
+                    {isLowStock && (
+                      <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-md shadow-xs animate-pulse">
+                        Low Stock ({stockNum})
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400 line-clamp-2 mt-1">{item.description || 'No description provided.'}</p>
+
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-grow space-y-2">
+                    <h3 className="font-bold text-slate-900 text-base line-clamp-1">{item.itemName}</h3>
+                    <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
+                      <span>Price: <strong className="text-[#0D4715] text-sm">₹{item.price}</strong> / {item.unit}</span>
+                      <span>Stock: <strong className={isOutOfStock ? 'text-red-600 font-extrabold' : isLowStock ? 'text-amber-600 font-extrabold' : 'text-slate-800'}>{item.op_stock}</strong></span>
+                    </div>
+                    <p className="text-xs text-slate-400 line-clamp-2 mt-1">{item.description || 'No description provided.'}</p>
 
                   {/* Actions */}
                   <div className="pt-3 mt-auto border-t border-slate-100 flex items-center justify-end gap-2">
@@ -276,7 +292,8 @@ const Inventory = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         ) : (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 space-y-3">

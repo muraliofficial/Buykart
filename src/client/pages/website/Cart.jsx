@@ -1,36 +1,74 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Plus, Minus, Trash2, ArrowLeft, CheckCircle2, AlertCircle, ShoppingCart } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2, ArrowLeft, CheckCircle2, AlertCircle, ShoppingCart, X, MapPin, Phone, CreditCard } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { getProductImageUrl } from '../../utils/imageHelper';
+import CustomerAuthModal from '../../components/website/CustomerAuthModal';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, getTotalPrice, checkout } = useCart();
-  const { currentUser } = useAuth();
+  const { customer } = useAuth();
+  const activeUser = customer;
   const navigate = useNavigate();
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [alertState, setAlertState] = useState(null); // { type: 'success'|'error', message: string }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [shippingDetails, setShippingDetails] = useState({
+    fullName: '',
+    phone: '',
+    address: '',
+    pincode: '',
+    paymentMethod: 'COD',
+  });
 
   const items = Object.values(cart);
   const totalPrice = getTotalPrice();
 
-  const handleCheckout = async () => {
-    if (!currentUser) {
-      setAlertState({ type: 'error', message: 'Please log in to complete checkout.' });
-      setTimeout(() => navigate('/login'), 1500);
+  const handleOpenCheckoutModal = () => {
+    if (!activeUser) {
+      setAuthModalOpen(true);
+      return;
+    }
+    const defaultAddr = customer?.addresses && customer.addresses.length > 0 ? customer.addresses[0] : '';
+    setShippingDetails((prev) => ({
+      ...prev,
+      fullName: activeUser.name || '',
+      phone: activeUser.mobile || activeUser.phone || '',
+      address: defaultAddr || prev.address || '',
+    }));
+    setIsModalOpen(true);
+  };
+
+  const handleFinalCheckout = async (e) => {
+    e.preventDefault();
+    setAlertState(null);
+
+    const cleanPincode = String(shippingDetails.pincode || '').trim();
+    if (!/^\d{6}$/.test(cleanPincode)) {
+      setAlertState({ type: 'error', message: 'Please enter a valid 6-digit numerical Pincode.' });
       return;
     }
 
     setCheckoutLoading(true);
-    setAlertState(null);
 
-    const res = await checkout();
+    const checkoutPayload = {
+      ...shippingDetails,
+      pincode: cleanPincode,
+      customerId: activeUser?.id,
+      customerName: activeUser?.name || shippingDetails.fullName,
+      customerMobile: activeUser?.mobile || shippingDetails.phone
+    };
+
+    const res = await checkout(checkoutPayload);
     setCheckoutLoading(false);
 
     if (res.success) {
+      setIsModalOpen(false);
       setAlertState({ type: 'success', message: res.message });
+      setTimeout(() => navigate('/my-orders'), 1500);
     } else {
       setAlertState({ type: 'error', message: res.message });
     }
@@ -180,24 +218,135 @@ const Cart = () => {
                 </div>
 
                 <button
-                  onClick={handleCheckout}
-                  disabled={checkoutLoading}
-                  className="w-full bg-[#0D4715] hover:bg-[#41644A] text-white font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  onClick={handleOpenCheckoutModal}
+                  className="w-full bg-[#0D4715] hover:bg-[#41644A] text-white font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {checkoutLoading ? (
-                    <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-5 h-5" />
-                      <span>Proceed to Checkout</span>
-                    </>
-                  )}
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Proceed to Checkout</span>
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Delivery Address & Payment Method Checkout Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#0D4715]" />
+                Delivery Details
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFinalCheckout} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.fullName}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, fullName: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0D4715]"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase">Phone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={shippingDetails.phone}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, phone: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0D4715]"
+                    placeholder="9876543210"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700 uppercase">Delivery Address</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={shippingDetails.address}
+                  onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0D4715]"
+                  placeholder="Street, Flat No, Landmark..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase">Pincode</label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.pincode}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0D4715]"
+                    placeholder="600001"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase">Payment Method</label>
+                  <select
+                    value={shippingDetails.paymentMethod}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, paymentMethod: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0D4715]"
+                  >
+                    <option value="COD">Cash on Delivery (COD)</option>
+                    <option value="UPI">UPI / GPay / PhonePe</option>
+                    <option value="Card">Credit / Debit Card</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
+                <div>
+                  <span className="text-xs text-gray-400 block">Total Amount</span>
+                  <span className="text-xl font-extrabold text-[#0D4715]">₹{totalPrice}</span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={checkoutLoading}
+                  className="bg-[#0D4715] hover:bg-[#41644A] text-white font-bold py-3 px-6 rounded-xl transition shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
+                >
+                  {checkoutLoading ? (
+                    <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Place Order Now</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {authModalOpen && (
+        <CustomerAuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          onSuccess={() => {
+            setAuthModalOpen(false);
+            handleOpenCheckoutModal();
+          }}
+        />
+      )}
     </div>
   );
 };

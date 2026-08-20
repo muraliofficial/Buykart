@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { MapPin, Phone, Mail, Send, CheckCircle2 } from 'lucide-react';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: '', email: '', message: '' });
-    setTimeout(() => setSubmitted(false), 4000);
+    setSubmitting(true);
+    try {
+      await axios.post('/website/contact', formData);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', message: '' });
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send message.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

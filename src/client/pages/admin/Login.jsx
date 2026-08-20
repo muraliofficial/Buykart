@@ -23,7 +23,7 @@ const Login = () => {
 
     const res = await login(username, password);
     if (res.success) {
-      navigate('/dashboard');
+      navigate('/admin/dashboard');
     } else {
       setErrorMsg(res.message);
     }
@@ -108,7 +108,7 @@ const Login = () => {
         <div className="pt-2 text-center border-t border-white/10">
           <p className="text-xs text-white/80">
             Don't have an account?{' '}
-            <Link to="/register" className="font-bold text-[#E9762B] hover:underline">
+            <Link to="/admin/register" className="font-bold text-[#E9762B] hover:underline">
               Create New Account
             </Link>
           </p>

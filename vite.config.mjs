@@ -7,8 +7,40 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/website': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+      },
+      '/admin': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+      },
+      '/ontime': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+      },
       '/products': 'http://localhost:3000',
       '/login': 'http://localhost:3000',
+      '/register': 'http://localhost:3000',
       '/addUser': 'http://localhost:3000',
       '/addInventory': 'http://localhost:3000',
       '/updateInventory': 'http://localhost:3000',
