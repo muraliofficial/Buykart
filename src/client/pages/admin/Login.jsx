@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn, Lock, User, AlertCircle, ShoppingBag } from 'lucide-react';
+import MaterialIcon from '../../components/common/MaterialIcon';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/common/Toast';
 
 const Login = () => {
   const { login, loading } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -23,67 +25,75 @@ const Login = () => {
 
     const res = await login(username, password);
     if (res.success) {
+      toast.success(`Welcome back, ${username}!`);
       navigate('/admin/dashboard');
     } else {
       setErrorMsg(res.message);
+      toast.error(res.message || 'Login failed');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0D4715] via-[#1b5e20] to-[#41644A] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0D4715] via-[#1b5e20] to-[#2d4a22] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
-            <ShoppingBag className="w-9 h-9 text-[#E9762B]" />
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner text-[#E9762B]">
+            <MaterialIcon name="shopping_bag" size={36} />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h1>
-          <p className="text-xs text-emerald-100 font-medium">Log in to manage your Buykart store & orders</p>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Buykart Admin</h1>
+          <p className="text-xs text-emerald-100 font-medium">Log in to manage orders, inventory, and operations</p>
         </div>
 
         {/* Alert Error Message */}
         {errorMsg && (
           <div className="bg-red-500/20 border border-red-400/40 text-red-100 p-3.5 rounded-xl text-xs flex items-center gap-2.5 backdrop-blur-sm">
-            <AlertCircle className="w-4 h-4 text-red-300 shrink-0" />
+            <span className="text-red-300 shrink-0">
+              <MaterialIcon name="error" size={18} />
+            </span>
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold text-emerald-100 uppercase tracking-wider">Username</label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70 flex items-center pointer-events-none">
+                <MaterialIcon name="person" size={20} />
+              </span>
               <input
                 type="text"
                 placeholder="Username or Phone Number"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:bg-white/20 focus:border-white/50 transition text-sm font-medium"
+                className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:bg-white/20 focus:border-white/50 transition text-sm font-medium"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold text-emerald-100 uppercase tracking-wider">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/70 flex items-center pointer-events-none">
+                <MaterialIcon name="lock" size={20} />
+              </span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:bg-white/20 focus:border-white/50 transition text-sm font-medium"
+                className="w-full pl-11 pr-11 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:bg-white/20 focus:border-white/50 transition text-sm font-medium"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition cursor-pointer flex items-center"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <MaterialIcon name={showPassword ? 'visibility_off' : 'visibility'} size={20} />
               </button>
             </div>
           </div>
@@ -91,27 +101,33 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#E9762B] hover:bg-[#d6651d] text-white font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50 mt-2"
+            className="w-full bg-[#E9762B] hover:bg-[#d6651d] text-white font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50 mt-2 active:scale-95"
           >
             {loading ? (
               <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
             ) : (
               <>
-                <LogIn className="w-4 h-4" />
-                <span>Log In</span>
+                <MaterialIcon name="login" size={18} />
+                <span>Log In to Dashboard</span>
               </>
             )}
           </button>
         </form>
 
         {/* Footer Link to Register */}
-        <div className="pt-2 text-center border-t border-white/10">
+        <div className="pt-2 text-center border-t border-white/10 space-y-2">
           <p className="text-xs text-white/80">
             Don't have an account?{' '}
             <Link to="/admin/register" className="font-bold text-[#E9762B] hover:underline">
               Create New Account
             </Link>
           </p>
+          <div className="pt-1">
+            <Link to="/" className="text-xs font-semibold text-emerald-200/80 hover:text-white flex items-center justify-center gap-1">
+              <MaterialIcon name="arrow_back" size={14} />
+              <span>Back to Customer Store</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

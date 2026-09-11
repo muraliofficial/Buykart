@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Users as UsersIcon, Search, RefreshCw, UserCheck } from 'lucide-react';
+import MaterialIcon from '../../components/common/MaterialIcon';
+import { useToast } from '../../components/common/Toast';
 
 const Users = () => {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +19,7 @@ const Users = () => {
       console.error('Error fetching users:', err);
       setUsers([]);
       setLoading(false);
+      toast.error('Failed to load users');
     }
   };
 
@@ -27,8 +30,9 @@ const Users = () => {
   const safeUsers = Array.isArray(users) ? users : [];
 
   const filteredUsers = safeUsers.filter((u) => {
-    const matchesName = u.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPhone = u.phone?.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    const matchesName = u.name?.toLowerCase().includes(q);
+    const matchesPhone = (u.phone || u.mobile || '')?.toLowerCase().includes(q);
     return matchesName || matchesPhone;
   });
 
@@ -37,54 +41,71 @@ const Users = () => {
       {/* Top Header */}
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-            <UsersIcon className="w-8 h-8 text-[#0D4715]" />
-            Registered Users
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-emerald-100 text-[#0D4715] flex items-center justify-center">
+              <MaterialIcon name="group" size={28} />
+            </span>
+            <span>Registered Users</span>
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">Directory of registered customer and admin user accounts</p>
+          <p className="text-slate-500 text-sm mt-1">Directory of registered customer and administrator accounts</p>
         </div>
 
         <button
           onClick={fetchUsers}
           disabled={loading}
-          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Users</span>
+          <MaterialIcon name="refresh" size={16} className={loading ? 'animate-spin' : ''} />
+          <span>Refresh Directory</span>
         </button>
       </div>
 
-      {/* Controls Bar */}
-      <div className="max-w-7xl mx-auto bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Search & Stats Bar */}
+      <div className="max-w-7xl mx-auto bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-96">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
+            <MaterialIcon name="search" size={20} />
+          </div>
           <input
             type="text"
-            placeholder="Search by Username or Phone..."
+            placeholder="Search by username, phone number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0D4715] transition"
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0D4715] focus:bg-white transition"
           />
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold w-full sm:w-auto justify-end">
+          <span className="px-3 py-1 bg-slate-100 rounded-lg text-slate-700 font-bold">
+            Total Users: {safeUsers.length}
+          </span>
+          {searchQuery && (
+            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold">
+              Found: {filteredUsers.length}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="max-w-7xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+      {/* Users Table & Cards */}
+      <div className="max-w-7xl mx-auto bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <RefreshCw className="w-8 h-8 text-[#0D4715] animate-spin mx-auto" />
-            <p className="text-slate-500 font-semibold text-sm">Loading users list...</p>
+            <div className="inline-flex p-3 rounded-full bg-emerald-50 text-[#0D4715]">
+              <MaterialIcon name="refresh" size={32} className="animate-spin" />
+            </div>
+            <p className="text-slate-600 font-bold text-sm">Loading user directory...</p>
           </div>
         ) : filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-700 text-xs font-extrabold uppercase tracking-wider border-b border-slate-100">
+              <thead className="bg-slate-50 text-slate-600 text-xs font-extrabold uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="p-4">User</th>
-                  <th className="p-4">Username</th>
-                  <th className="p-4">Phone Number</th>
-                  <th className="p-4">Registered Date</th>
-                  <th className="p-4">User ID</th>
+                  <th className="py-4 px-5">User</th>
+                  <th className="py-4 px-5">Username</th>
+                  <th className="py-4 px-5">Phone Number</th>
+                  <th className="py-4 px-5">Registered Date</th>
+                  <th className="py-4 px-5">Account ID</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -98,20 +119,38 @@ const Users = () => {
                     : 'N/A';
 
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/80 transition">
-                      <td className="p-4">
-                        <div className="w-9 h-9 rounded-full bg-[#0D4715] text-white flex items-center justify-center font-bold text-sm">
+                    <tr key={user.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-4 px-5">
+                        <div className="w-10 h-10 rounded-xl bg-[#0D4715] text-white flex items-center justify-center font-bold text-sm shadow-xs">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                       </td>
-                      <td className="p-4 font-bold text-slate-900 flex items-center gap-2">
-                        <span>{user.name}</span>
-                        <UserCheck className="w-4 h-4 text-emerald-600" />
+                      <td className="py-4 px-5 font-bold text-slate-900">
+                        <div className="flex items-center gap-1.5">
+                          <span>{user.name || 'Anonymous User'}</span>
+                          <span className="text-emerald-600 flex items-center" title="Verified Account">
+                            <MaterialIcon name="verified" size={16} fill />
+                          </span>
+                        </div>
                       </td>
-                      <td className="p-4 text-slate-600 font-medium">{user.phone || user.mobile || 'N/A'}</td>
-                      <td className="p-4 text-slate-500 text-xs">{regDate}</td>
-                      <td className="p-4 font-mono text-xs text-slate-400 uppercase">
-                        {user.id?.substring(0, 8)}
+                      <td className="py-4 px-5 text-slate-700 font-medium">
+                        {user.phone || user.mobile ? (
+                          <div className="flex items-center gap-1.5 text-slate-700">
+                            <MaterialIcon name="call" size={16} className="text-slate-400" />
+                            <span>{user.phone || user.mobile}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">No phone attached</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-5 text-slate-600 text-xs font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <MaterialIcon name="calendar_today" size={14} className="text-slate-400" />
+                          <span>{regDate}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 font-mono text-xs text-slate-400 uppercase">
+                        {user.id?.substring(0, 10)}
                       </td>
                     </tr>
                   );
@@ -120,10 +159,14 @@ const Users = () => {
             </table>
           </div>
         ) : (
-          <div className="p-12 text-center space-y-2">
-            <UsersIcon className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-base font-bold text-slate-700">No users found</h3>
-            <p className="text-xs text-slate-400">Registered users will be listed here.</p>
+          <div className="p-16 text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <MaterialIcon name="group" size={32} />
+            </div>
+            <h3 className="text-base font-bold text-slate-800">No users found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {searchQuery ? 'Try changing your search query.' : 'Registered users will be listed here.'}
+            </p>
           </div>
         )}
       </div>

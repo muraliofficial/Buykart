@@ -1,34 +1,30 @@
 import React, { useState } from 'react';
-import { Truck, Phone, ShieldCheck, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import MaterialIcon from '../../components/common/MaterialIcon';
+import { useToast } from '../../components/common/Toast';
 
 const RiderLogin = () => {
   const { loginRider } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [step, setStep] = useState('MOBILE'); // 'MOBILE' | 'OTP'
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
 
   const handleSendOtp = (e) => {
     e.preventDefault();
     if (!mobile || mobile.length < 10) {
       setError('Please enter a valid 10-digit mobile number');
+      toast.warning('Please enter a valid 10-digit mobile number');
       return;
     }
     setError('');
-    console.log(`[Rider OTP] Mobile: ${mobile}, OTP: 1234`);
-    showToast(`🔑 Test OTP for Rider ${mobile} is 1234`);
+    toast.info(`🔑 Test OTP for Rider ${mobile} is 1234`);
     setStep('OTP');
   };
 
@@ -52,41 +48,34 @@ const RiderLogin = () => {
       }
       setLoading(false);
       loginRider(res.data.rider, res.data.token);
-      showToast(`Welcome, Rider ${res.data.rider.name}!`);
-      setTimeout(() => navigate('/ontime/dashboard'), 600);
+      toast.success(`Welcome, Rider ${res.data.rider?.name || ''}!`);
+      setTimeout(() => navigate('/ontime/dashboard'), 500);
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Rider login failed. Please check mobile & test OTP 1234.');
+      const msg = err.response?.data?.message || 'Rider login failed. Please check mobile & test OTP 1234.';
+      setError(msg);
+      toast.error(msg);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
-      {/* Toast Alert Banner */}
-      {toastMessage && (
-        <div className="fixed top-4 left-4 right-4 max-w-md mx-auto z-50 bg-amber-500 text-slate-950 px-4 py-3 rounded-2xl font-extrabold text-xs flex items-center justify-between shadow-2xl">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-slate-950" />
-            {toastMessage}
-          </span>
-          <button onClick={() => setToastMessage(null)} className="font-black text-sm">✕</button>
-        </div>
-      )}
-
-      <div className="w-full max-w-md bg-slate-800/80 backdrop-blur-md p-8 rounded-3xl border border-slate-700 shadow-2xl space-y-6">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
         
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
-            <Truck className="w-8 h-8" />
+            <MaterialIcon name="two_wheeler" size={34} />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">OnTime Delivery App</h1>
-          <p className="text-xs text-slate-400 font-medium">Delivery Personnel Portal</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">OnTime Rider App</h1>
+          <p className="text-xs text-slate-400 font-medium">Buykart Express Delivery Fleet Portal</p>
         </div>
 
         {error && (
           <div className="bg-red-500/20 text-red-300 border border-red-500/30 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <span className="text-red-400 shrink-0">
+              <MaterialIcon name="error" size={18} />
+            </span>
             <span>{error}</span>
           </div>
         )}
@@ -96,7 +85,7 @@ const RiderLogin = () => {
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                Registered Mobile Number
+                Registered Rider Mobile
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">+91</span>
@@ -105,19 +94,20 @@ const RiderLogin = () => {
                   maxLength={10}
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter registered rider mobile"
-                  className="w-full pl-14 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="Enter 10-digit mobile"
+                  className="w-full pl-14 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
                   required
+                  autoFocus
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               <span>Get Rider Login OTP</span>
-              <ArrowRight className="w-4 h-4" />
+              <MaterialIcon name="arrow_forward" size={18} />
             </button>
           </form>
         )}
@@ -125,68 +115,86 @@ const RiderLogin = () => {
         {/* STEP 2: VERIFY OTP */}
         {step === 'OTP' && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="bg-slate-900 p-3 rounded-xl text-xs text-slate-300 border border-slate-700 flex justify-between items-center">
+            <div className="bg-slate-950 p-3 rounded-xl text-xs text-slate-300 border border-slate-800 flex justify-between items-center">
               <span>OTP sent to <strong>+91 {mobile}</strong></span>
               <button
                 type="button"
                 onClick={() => setStep('MOBILE')}
-                className="text-amber-400 font-bold underline"
+                className="text-amber-400 font-bold hover:underline cursor-pointer"
               >
-                Change
+                Change Number
               </button>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                Enter 4-Digit OTP
+                Enter 4-Digit Rider OTP
               </label>
               <div className="relative">
-                <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
+                  <MaterialIcon name="pin" size={20} />
+                </span>
                 <input
                   type="text"
                   maxLength={4}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter 1234"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-center text-lg font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="1234"
+                  className="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-center text-xl font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                   required
+                  autoFocus
                 />
               </div>
-              <p className="mt-1.5 text-[11px] text-amber-400 font-medium">
-                Testing Rider OTP: <strong>1234</strong>
-              </p>
+
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-[11px] text-amber-400 font-medium">
+                  Test Rider OTP: <strong>1234</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setOtp('1234')}
+                  className="text-[11px] font-bold text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                  Autofill 1234
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
             >
-              {loading ? 'Verifying...' : 'Verify & Open OnTime App'}
+              {loading ? (
+                <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-slate-950 border-t-transparent"></span>
+              ) : (
+                <>
+                  <MaterialIcon name="check_circle" size={18} />
+                  <span>Verify & Open Rider Dashboard</span>
+                </>
+              )}
             </button>
           </form>
         )}
 
-        {/* Info Note & Signature */}
-        <div className="pt-3 border-t border-slate-700/50 text-center space-y-2">
+        {/* Info Note & Fast Links */}
+        <div className="pt-3 border-t border-slate-800 text-center space-y-2.5">
           <p className="text-[11px] text-slate-400">
-            ⚠️ Rider accounts cannot self-register. Accounts are created exclusively via the <strong>Admin App</strong>.
+            ℹ️ Rider accounts are created by Admin in <strong className="text-slate-300">Rider Fleet Management</strong>.
           </p>
-          <div className="flex justify-center gap-3 text-xs font-bold pt-1">
-            <Link to="/" className="text-emerald-400 hover:underline">Website</Link>
+          <div className="flex justify-center gap-4 text-xs font-bold pt-1">
+            <Link to="/" className="text-emerald-400 hover:underline flex items-center gap-1">
+              <MaterialIcon name="storefront" size={14} />
+              <span>Customer Store</span>
+            </Link>
             <span className="text-slate-600">•</span>
-            <Link to="/dashboard" className="text-cyan-400 hover:underline">Admin Panel</Link>
+            <Link to="/admin/dashboard" className="text-amber-400 hover:underline flex items-center gap-1">
+              <MaterialIcon name="dashboard" size={14} />
+              <span>Admin Panel</span>
+            </Link>
           </div>
-          <div className="pt-2 text-[10px] text-slate-400 font-medium">
-            <span>OnTime Rider App v2.5.0 • Developed by </span>
-            <a
-              href="http://my-self-murali.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-amber-400 font-extrabold underline hover:text-amber-300 transition"
-            >
-              Murali (Portfolio ↗)
-            </a>
+          <div className="pt-2 text-[10px] text-slate-500 font-medium">
+            <span>OnTime Fleet App • Powered by Buykart</span>
           </div>
         </div>
 

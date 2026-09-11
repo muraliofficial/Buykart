@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './components/common/Toast';
 
 import Navbar from './components/Navbar';
 import AdminNavbar from './components/AdminNavbar';
@@ -58,7 +59,8 @@ const App = () => {
   return (
     <AuthProvider>
       <CartProvider>
-        <Routes>
+        <ToastProvider>
+          <Routes>
           {/* Public Storefront Routes */}
           <Route element={<WebsiteLayout />}>
             <Route path="/" element={<Home />} />
@@ -147,6 +149,7 @@ const App = () => {
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ToastProvider>
       </CartProvider>
     </AuthProvider>
   );

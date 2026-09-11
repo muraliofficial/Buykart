@@ -2,7 +2,7 @@ const { db } = require('../firebase');
 const path = require('path');
 const fs = require('fs').promises;
 const bcrypt = require('bcryptjs');
-const cloudinary = require('cloudinary').v2;
+const { uploadToCloudinary } = require('../utils/cloudinary');
 const { generateToken } = require('../middleware/authMiddleware');
 
 const SALT_ROUNDS = 10;
@@ -33,15 +33,25 @@ exports.addInventory = async (req, res) => {
     try {
         const { category, itemName, unit, price, op_stock, description } = req.body;
         
-        let imageUrl = '';
+        let image = {};
         let imageId = '';
 
         if (req.file) {
-            const result = await uploadToCloudinary(req.file.buffer);
-            imageUrl = result.secure_url;
-            imageId = result.public_id;
+            try {
+                const result = await uploadToCloudinary(req.file.buffer);
+                image = result.secure_url;
+                imageId = result.public_id;
+            } catch (uploadErr) {
+                console.error('[AddInventory] Cloudinary upload error:', uploadErr);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: `Image upload failed: ${uploadErr.message || 'Cloudinary service error'}` 
+                });
+            }
         } else {
-            imageUrl = 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=500&q=80';
+            // Optional image: store empty object {} per specification
+            image = {};
+            imageId = '';
         }
 
         const newInventory = {
@@ -51,7 +61,7 @@ exports.addInventory = async (req, res) => {
             price: Number(price),
             op_stock: Number(op_stock),
             description: description || '',
-            image: imageUrl,
+            image: image,
             imageId: imageId,
             createdAt: new Date().toISOString()
         };
@@ -59,6 +69,7 @@ exports.addInventory = async (req, res) => {
         const docRef = await db.collection(COLLECTION_INVENTORY).add(newInventory);
         res.status(200).json({ success: true, message: 'Inventory item added successfully', id: docRef.id, data: newInventory });
     } catch (error) {
+        console.error('[AddInventory] Internal error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -66,7 +77,7 @@ exports.addInventory = async (req, res) => {
 exports.updateInventory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { category, itemName, unit, price, op_stock, description } = req.body;
+        const { category, itemName, unit, price, op_stock, description, removeImage } = req.body;
         const updateData = { category, itemName, unit, description };
 
         if (price !== undefined) updateData.price = Number(price);
@@ -76,14 +87,27 @@ exports.updateInventory = async (req, res) => {
         updateData.updatedAt = new Date().toISOString();
         
         if (req.file) {
-            const result = await uploadToCloudinary(req.file.buffer);
-            updateData.image = result.secure_url;
-            updateData.imageId = result.public_id;
+            try {
+                const result = await uploadToCloudinary(req.file.buffer);
+                updateData.image = result.secure_url;
+                updateData.imageId = result.public_id;
+            } catch (uploadErr) {
+                console.error('[UpdateInventory] Cloudinary upload error:', uploadErr);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: `Image upload failed: ${uploadErr.message || 'Cloudinary service error'}` 
+                });
+            }
+        } else if (removeImage === 'true' || removeImage === true) {
+            // User requested explicit removal of existing image
+            updateData.image = {};
+            updateData.imageId = '';
         }
 
         await db.collection(COLLECTION_INVENTORY).doc(id).update(updateData);
         res.status(200).json({ success: true, message: 'Inventory item updated successfully' });
     } catch (error) {
+        console.error('[UpdateInventory] Internal error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShoppingBag, Search, RefreshCw, ChevronDown, ChevronUp, MapPin, CreditCard, Phone, PackageCheck, Send, CheckCircle2, Truck, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import PackingModal from '../../components/admin/PackingModal';
 import DispatchModal from '../../components/admin/DispatchModal';
+import { useToast } from '../../components/common/Toast';
+import MaterialIcon from '../../components/common/MaterialIcon';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -14,6 +15,8 @@ const Orders = () => {
 
   const [searchParams] = useSearchParams();
   const statusFilterParam = searchParams.get('status');
+
+  const { showSuccess, showError } = useToast();
 
   // Modals state
   const [packingOrder, setPackingOrder] = useState(null);
@@ -27,6 +30,7 @@ const Orders = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching orders:', err);
+      showError('Failed to fetch orders from server.');
       setLoading(false);
     }
   };
@@ -42,18 +46,19 @@ const Orders = () => {
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
+      showSuccess(`Order status updated to ${newStatus}.`);
     } catch (err) {
       console.error('Error updating order status:', err);
-      alert('Failed to update status.');
+      showError(err.response?.data?.message || 'Failed to update order status.');
     } finally {
       setUpdatingId(null);
     }
   };
 
   const filteredOrders = orders.filter((o) => {
-    const matchesId = o.id?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesUser = (o.userName || o.customerName)?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesId = (o.id || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesUser = (o.userName || o.customerName || '').toLowerCase().includes(searchQuery.toLowerCase());
+
     let matchesStatus = true;
     if (statusFilterParam) {
       const cleanParam = statusFilterParam.toLowerCase().replace(/\s+/g, '');
@@ -73,79 +78,95 @@ const Orders = () => {
       {/* Top Header */}
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-            <ShoppingBag className="w-8 h-8 text-[#0D4715]" />
-            Live Customer Orders & Fulfillments
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#0D4715] flex items-center justify-center shadow-xs">
+              <MaterialIcon name="assignment" size={24} />
+            </div>
+            <span>Customer Orders & Fulfillment</span>
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">Accept orders, pack products, assign riders, and dispatch</p>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium">
+            Accept incoming orders, verify item packing, assign fleet riders, and manage dispatch
+          </p>
         </div>
 
         <button
           onClick={fetchOrders}
           disabled={loading}
-          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <MaterialIcon name="refresh" size={16} className={loading ? 'animate-spin' : ''} />
           <span>Refresh Orders</span>
         </button>
       </div>
 
       {/* Controls Bar */}
-      <div className="max-w-7xl mx-auto bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      <div className="max-w-7xl mx-auto bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="relative w-full sm:w-80 flex items-center">
+          <div className="absolute left-3.5 pointer-events-none text-slate-400">
+            <MaterialIcon name="search" size={20} />
+          </div>
           <input
             type="text"
             placeholder="Search by Order ID or Customer..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0D4715] transition"
+            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D4715] transition focus:bg-white"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+            >
+              <MaterialIcon name="close" size={16} />
+            </button>
+          )}
         </div>
 
         {statusFilterParam && (
-          <div className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-            Filtering Status: <span className="text-[#0D4715] font-extrabold">{statusFilterParam}</span>
+          <div className="text-xs font-bold text-slate-700 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5">
+            <MaterialIcon name="filter_alt" size={16} className="text-[#0D4715]" />
+            <span>Filtering: <strong className="text-[#0D4715]">{statusFilterParam}</strong></span>
           </div>
         )}
       </div>
 
       {/* Orders Table */}
-      <div className="max-w-7xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center space-y-3">
-            <RefreshCw className="w-8 h-8 text-[#0D4715] animate-spin mx-auto" />
-            <p className="text-slate-500 font-semibold text-sm">Loading customer orders...</p>
+          <div className="py-24 text-center space-y-3">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-[#0D4715] border-t-transparent"></div>
+            <p className="text-slate-500 font-bold text-xs">Loading customer orders...</p>
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-900 text-white text-xs font-extrabold uppercase tracking-wider">
+              <thead className="bg-slate-900 text-white text-xs font-black uppercase tracking-wider">
                 <tr>
                   <th className="p-4">Order ID</th>
-                  <th className="p-4">Customer Info</th>
-                  <th className="p-4">Date</th>
+                  <th className="p-4">Customer</th>
+                  <th className="p-4">Date & Time</th>
                   <th className="p-4">Total Amount</th>
-                  <th className="p-4">Status & Workflow</th>
-                  <th className="p-4 text-center">Fulfillment Actions</th>
+                  <th className="p-4">Status & Stage</th>
+                  <th className="p-4 text-center">Fulfillment Action</th>
                   <th className="p-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredOrders.map((order) => {
                   const itemsList = Object.values(order.items || {});
-                  const totalItems = itemsList.reduce((sum, item) => sum + (item.quantity || 1), 0);
-                  const totalAmount = order.total || itemsList.reduce(
-                    (sum, item) => sum + Number(item.price || 0) * (item.quantity || 1),
-                    0
-                  );
+                  const totalAmount =
+                    order.total ||
+                    itemsList.reduce(
+                      (sum, item) => sum + Number(item.price || 0) * (item.quantity || 1),
+                      0
+                    );
                   const orderDate = order.createdAt
                     ? new Date(order.createdAt).toLocaleDateString('en-IN', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
                       })
                     : 'N/A';
 
@@ -156,13 +177,17 @@ const Orders = () => {
                   return (
                     <React.Fragment key={order.id}>
                       <tr className="hover:bg-slate-50/80 transition">
-                        <td className="p-4 font-mono text-xs font-black text-slate-700 uppercase">
+                        <td className="p-4 font-mono text-xs font-black text-slate-800 uppercase">
                           #{order.id?.substring(0, 8)}
                         </td>
 
                         <td className="p-4">
-                          <span className="font-extrabold text-slate-900 block">{order.userName || order.customerName || 'Customer'}</span>
-                          <span className="text-xs text-slate-500 font-medium">{order.customerMobile || shipping.phone || ''}</span>
+                          <span className="font-extrabold text-slate-900 block">
+                            {order.userName || order.customerName || 'Customer'}
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            {order.customerMobile || shipping.phone || ''}
+                          </span>
                         </td>
 
                         <td className="p-4 text-slate-600 text-xs font-medium">{orderDate}</td>
@@ -176,7 +201,7 @@ const Orders = () => {
                             value={status}
                             disabled={updatingId === order.id}
                             onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                            className="bg-slate-100 border border-slate-300 text-slate-900 text-xs font-extrabold px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0D4715] transition cursor-pointer"
+                            className="bg-slate-100 border border-slate-300 text-slate-900 text-xs font-black px-3 py-1.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0D4715] transition cursor-pointer"
                           >
                             <option value="Pending">Pending</option>
                             <option value="Accepted">Accepted</option>
@@ -196,7 +221,7 @@ const Orders = () => {
                             {status === 'Pending' && (
                               <button
                                 onClick={() => handleStatusChange(order.id, 'Accepted')}
-                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-lg shadow-xs transition cursor-pointer"
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-xs transition cursor-pointer"
                               >
                                 Accept Order
                               </button>
@@ -205,32 +230,34 @@ const Orders = () => {
                             {(status === 'Accepted' || status === 'Packing') && (
                               <button
                                 onClick={() => setPackingOrder(order)}
-                                className="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-extrabold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-black rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
                               >
-                                <PackageCheck className="w-3.5 h-3.5" />
-                                <span>Perform Packing</span>
+                                <MaterialIcon name="inventory" size={15} />
+                                <span>Pack Items</span>
                               </button>
                             )}
 
                             {status === 'Packed' && (
                               <button
                                 onClick={() => setDispatchOrder(order)}
-                                className="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-extrabold rounded-lg shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                className="px-3.5 py-1.5 bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-black rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
                               >
-                                <Send className="w-3.5 h-3.5" />
-                                <span>Dispatch & Rider</span>
+                                <MaterialIcon name="send" size={15} />
+                                <span>Assign Rider</span>
                               </button>
                             )}
 
                             {(status === 'Dispatched' || status === 'Out For Delivery') && (
-                              <span className="text-[11px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 flex items-center gap-1">
-                                <Truck className="w-3 h-3" /> Rider: {order.assignedRiderName || 'Assigned'}
+                              <span className="text-[11px] font-black text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 flex items-center gap-1">
+                                <MaterialIcon name="two_wheeler" size={15} className="text-amber-600" />
+                                <span>{order.assignedRiderName || 'Rider Assigned'}</span>
                               </span>
                             )}
 
                             {status === 'Delivered' && (
-                              <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" /> Fulfill Complete
+                              <span className="text-[11px] font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1">
+                                <MaterialIcon name="check_circle" size={15} className="text-emerald-600" filled />
+                                <span>Delivered</span>
                               </span>
                             )}
                           </div>
@@ -241,8 +268,9 @@ const Orders = () => {
                             onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
                             className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition cursor-pointer"
                             title="Toggle order details"
+                            aria-label="Toggle order details"
                           >
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            <MaterialIcon name={isExpanded ? 'expand_less' : 'expand_more'} size={20} />
                           </button>
                         </td>
                       </tr>
@@ -252,17 +280,18 @@ const Orders = () => {
                         <tr className="bg-slate-50/80 border-b border-slate-100">
                           <td colSpan={7} className="p-4 sm:p-6 space-y-4">
                             {order.failureReason && (
-                              <div className="bg-red-50 text-red-800 p-3 rounded-xl border border-red-200 text-xs font-bold flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 text-red-600" />
+                              <div className="bg-rose-50 text-rose-800 p-3 rounded-2xl border border-rose-200 text-xs font-bold flex items-center gap-2">
+                                <MaterialIcon name="error" size={18} className="text-rose-600" filled />
                                 <span>Delivery Failed Reason: {order.failureReason}</span>
                               </div>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                               {/* Left: Items Breakdown */}
-                              <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                                <h4 className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px]">
-                                  Purchased Items ({itemsList.length})
+                              <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                                <h4 className="font-black text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                  <MaterialIcon name="shopping_cart" size={14} className="text-[#0D4715]" />
+                                  Ordered Products ({itemsList.length})
                                 </h4>
                                 <div className="divide-y divide-slate-100">
                                   {itemsList.map((it, idx) => (
@@ -281,32 +310,34 @@ const Orders = () => {
                               </div>
 
                               {/* Right: Customer Shipping & Payment Info */}
-                              <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
-                                <h4 className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px]">
-                                  Shipping & Rider Assignment
+                              <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                                <h4 className="font-black text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                  <MaterialIcon name="local_shipping" size={14} className="text-[#0D4715]" />
+                                  Destination & Delivery Partner
                                 </h4>
                                 <div className="space-y-2 text-slate-600">
                                   <div className="flex items-start gap-2">
-                                    <MapPin className="w-4 h-4 text-[#0D4715] shrink-0 mt-0.5" />
+                                    <MaterialIcon name="location_on" size={16} className="text-[#0D4715] shrink-0 mt-0.5" />
                                     <span>
                                       <strong>Address:</strong> {order.deliveryAddress || `${shipping.address}, ${shipping.pincode}`}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <Phone className="w-4 h-4 text-[#0D4715] shrink-0" />
+                                    <MaterialIcon name="call" size={16} className="text-[#0D4715] shrink-0" />
                                     <span><strong>Customer Phone:</strong> {order.customerMobile || shipping.phone || 'N/A'}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <CreditCard className="w-4 h-4 text-[#0D4715] shrink-0" />
+                                    <MaterialIcon name="payments" size={16} className="text-[#0D4715] shrink-0" />
                                     <span><strong>Payment Method:</strong> {order.paymentMethod || shipping.paymentMethod || 'COD'}</span>
                                   </div>
 
                                   {order.assignedRiderName && (
-                                    <div className="mt-2 pt-2 border-t border-slate-100 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-amber-900 font-medium">
-                                      <p className="font-bold text-xs flex items-center gap-1">
-                                        <Truck className="w-4 h-4 text-amber-700" /> Assigned Rider: {order.assignedRiderName}
+                                    <div className="mt-2 pt-2 border-t border-slate-100 bg-amber-50 p-3 rounded-2xl border border-amber-200 text-amber-900 font-medium space-y-0.5">
+                                      <p className="font-black text-xs flex items-center gap-1">
+                                        <MaterialIcon name="two_wheeler" size={16} className="text-amber-700" />
+                                        Assigned Rider: {order.assignedRiderName}
                                       </p>
-                                      <p className="text-[11px]">Rider Contact: +91 {order.assignedRiderMobile}</p>
+                                      <p className="text-[11px]">Rider Mobile: +91 {order.assignedRiderMobile}</p>
                                       {order.vehicleDetails && <p className="text-[11px]">Vehicle: {order.vehicleDetails}</p>}
                                     </div>
                                   )}
@@ -323,10 +354,12 @@ const Orders = () => {
             </table>
           </div>
         ) : (
-          <div className="p-12 text-center space-y-2">
-            <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-base font-bold text-slate-700">No orders found</h3>
-            <p className="text-xs text-slate-400">Customer orders will appear here as soon as they are placed.</p>
+          <div className="p-14 text-center space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+              <MaterialIcon name="shopping_bag" size={28} />
+            </div>
+            <h3 className="text-base font-black text-slate-700">No orders found</h3>
+            <p className="text-xs text-slate-400 font-medium">Customer orders will appear here automatically when placed.</p>
           </div>
         )}
       </div>

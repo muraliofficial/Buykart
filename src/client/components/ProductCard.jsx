@@ -1,7 +1,7 @@
 import React from 'react';
-import { ShoppingCart, Plus, Minus, Eye } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { getProductImageUrl } from '../utils/imageHelper';
+import { getProductImageUrl, DEFAULT_PRODUCT_IMAGE } from '../utils/imageHelper';
+import MaterialIcon from './common/MaterialIcon';
 
 const ProductCard = ({ product, onCardClick }) => {
   const { cart, addToCart, updateQuantity } = useCart();
@@ -18,19 +18,24 @@ const ProductCard = ({ product, onCardClick }) => {
       >
         <img
           src={getProductImageUrl(product)}
-          alt={product.itemName}
+          alt={product.itemName || 'Product item'}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=500&q=80';
+            e.target.src = DEFAULT_PRODUCT_IMAGE;
           }}
         />
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-[#0D4715] shadow-xs">
           {product.category || 'Grocery'}
         </div>
+        {stock <= 0 && (
+          <div className="absolute top-3 left-3 bg-rose-600/90 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md">
+            Out of Stock
+          </div>
+        )}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <span className="bg-white/90 text-gray-900 text-xs font-extrabold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 backdrop-blur-md">
-            <Eye className="w-3.5 h-3.5 text-[#0D4715]" /> Quick View
+            <MaterialIcon name="visibility" size={16} className="text-[#0D4715]" /> Quick View
           </span>
         </div>
       </div>
@@ -64,25 +69,27 @@ const ProductCard = ({ product, onCardClick }) => {
                 onClick={() => updateQuantity(product.id, -1)}
                 className="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer"
                 title="Decrease quantity"
+                aria-label="Decrease quantity"
               >
-                <Minus className="w-4 h-4" />
+                <MaterialIcon name="remove" size={18} />
               </button>
               <span className="font-extrabold text-[#0D4715] text-base px-3">{qty}</span>
               <button
                 onClick={() => updateQuantity(product.id, 1)}
                 className="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer"
                 title="Increase quantity"
+                aria-label="Increase quantity"
               >
-                <Plus className="w-4 h-4" />
+                <MaterialIcon name="add" size={18} />
               </button>
             </div>
           ) : (
             <button
               disabled={stock <= 0}
               onClick={() => addToCart(product)}
-              className="w-full bg-[#0D4715] hover:bg-[#41644A] text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer text-sm disabled:opacity-50"
+              className="w-full bg-[#0D4715] hover:bg-[#41644A] text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <MaterialIcon name="shopping_cart" size={18} />
               <span>{stock <= 0 ? 'Out of Stock' : 'Add to Cart'}</span>
             </button>
           )}

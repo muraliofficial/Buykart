@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, ShoppingCart, RefreshCw, Sparkles, Filter, ArrowUpDown } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import ProductModal from '../../components/ProductModal';
+import MaterialIcon from '../../components/common/MaterialIcon';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -72,38 +72,42 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-slate-50/50 pb-20">
       {/* Hero Header Banner */}
-      <section className="bg-gradient-to-r from-[#0D4715] to-[#41644A] text-white py-12 px-4 sm:px-6 lg:px-8 mb-10 shadow-md">
-        <div className="max-w-7xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-[#EBF4DD]">
-            <Sparkles className="w-4 h-4 text-[#E9762B]" />
-            <span>Farm-Fresh Groceries Delivered Fast</span>
+      <section className="bg-gradient-to-br from-[#0D4715] via-[#1b5e20] to-[#2e7d32] text-white py-14 sm:py-16 px-4 sm:px-6 lg:px-8 mb-10 shadow-lg relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto text-center space-y-4 relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-emerald-100 border border-white/10 shadow-sm">
+            <MaterialIcon name="verified" size={16} className="text-amber-400" filled />
+            <span>Farm-Fresh Groceries & Daily Essentials</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            Welcome to <span className="text-[#E9762B]">Buykart</span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+            Welcome to <span className="text-amber-400">Buykart</span>
           </h1>
-          <p className="text-gray-200 text-sm sm:text-base max-w-2xl mx-auto">
-            Discover hand-picked fruits, organic vegetables, and daily household essentials delivered straight to your door.
+          <p className="text-emerald-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+            Hand-picked fresh produce, dairy, bakery, and pantry staples delivered straight to your doorstep.
           </p>
 
           {/* Search Bar */}
           <div className="max-w-xl mx-auto pt-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative flex items-center">
+              <div className="absolute left-4 pointer-events-none flex items-center">
+                <MaterialIcon name="search" size={22} className="text-slate-400" />
+              </div>
               <input
                 type="text"
-                placeholder="Search fresh items, fruits, vegetables..."
+                placeholder="Search fresh items, fruits, vegetables, dairy..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white text-gray-900 rounded-2xl shadow-lg focus:outline-none focus:ring-4 focus:ring-[#E9762B]/50 transition text-sm font-medium"
+                className="w-full pl-12 pr-12 py-4 bg-white text-slate-900 placeholder-slate-400 rounded-2xl shadow-xl focus:outline-none focus:ring-4 focus:ring-amber-400/40 transition text-sm font-semibold border border-emerald-800/20"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-gray-100 px-2 py-1 rounded-md cursor-pointer"
+                  className="absolute right-3.5 p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                  aria-label="Clear search"
                 >
-                  Clear
+                  <MaterialIcon name="cancel" size={18} />
                 </button>
               )}
             </div>
@@ -114,10 +118,10 @@ const Home = () => {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Category Filters Header & Sort Control */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-[#0D4715]" />
-            <h2 className="text-xl font-bold text-gray-800">Categories</h2>
+            <MaterialIcon name="category" size={22} className="text-[#0D4715]" />
+            <h2 className="text-xl font-black text-slate-900">Explore Catalog</h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
@@ -128,8 +132,8 @@ const Home = () => {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     selectedCategory === cat
-                      ? 'bg-[#0D4715] text-white shadow-md scale-105'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                      ? 'bg-[#0D4715] text-white shadow-md shadow-emerald-900/20 scale-105'
+                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   {cat}
@@ -138,12 +142,13 @@ const Home = () => {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 shadow-xs">
-              <ArrowUpDown className="w-4 h-4 text-[#0D4715]" />
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
+              <MaterialIcon name="swap_vert" size={18} className="text-[#0D4715]" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-transparent focus:outline-none cursor-pointer"
+                className="bg-transparent focus:outline-none cursor-pointer pr-1"
+                aria-label="Sort products"
               >
                 <option value="default">Sort: Recommended</option>
                 <option value="price-low">Price: Low to High</option>
@@ -158,11 +163,11 @@ const Home = () => {
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <div key={n} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs space-y-4 animate-pulse">
-                <div className="w-full h-48 bg-gray-200 rounded-xl"></div>
-                <div className="h-5 bg-gray-200 rounded-md w-3/4"></div>
-                <div className="h-4 bg-gray-100 rounded-md w-1/2"></div>
-                <div className="h-10 bg-gray-200 rounded-xl w-full"></div>
+              <div key={n} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs space-y-4 animate-pulse">
+                <div className="w-full h-48 bg-slate-200 rounded-xl"></div>
+                <div className="h-5 bg-slate-200 rounded-md w-3/4"></div>
+                <div className="h-4 bg-slate-100 rounded-md w-1/2"></div>
+                <div className="h-10 bg-slate-200 rounded-xl w-full"></div>
               </div>
             ))}
           </div>
@@ -170,13 +175,14 @@ const Home = () => {
 
         {/* Error State */}
         {error && !loading && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl text-center space-y-3 my-8">
-            <p className="font-bold">{error}</p>
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 p-6 rounded-2xl text-center space-y-3 my-8 max-w-lg mx-auto shadow-sm">
+            <MaterialIcon name="error_outline" size={36} className="text-rose-600 mx-auto" />
+            <p className="font-bold text-sm">{error}</p>
             <button
               onClick={fetchProducts}
-              className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-700 transition"
+              className="inline-flex items-center gap-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-rose-700 transition cursor-pointer shadow-md"
             >
-              <RefreshCw className="w-4 h-4" /> Try Again
+              <MaterialIcon name="refresh" size={16} /> Try Again
             </button>
           </div>
         )}
@@ -195,17 +201,19 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 p-8 shadow-xs">
-                <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-700">No products found</h3>
-                <p className="text-gray-500 text-sm mt-1">Try adjusting your search query or selected category filter.</p>
+              <div className="text-center py-20 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs max-w-md mx-auto">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                  <MaterialIcon name="remove_shopping_cart" size={32} />
+                </div>
+                <h3 className="text-lg font-black text-slate-800">No products found</h3>
+                <p className="text-slate-500 text-xs mt-1 font-medium">Try adjusting your search keywords or switching category filters.</p>
                 <button
                   onClick={() => {
                     setSelectedCategory('All');
                     setSearchQuery('');
                     setSortBy('default');
                   }}
-                  className="mt-4 bg-[#0D4715] text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-[#41644A] transition"
+                  className="mt-5 bg-[#0D4715] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#1b5e20] transition cursor-pointer shadow-md"
                 >
                   Reset Filters
                 </button>

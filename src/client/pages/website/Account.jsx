@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { User, MapPin, Package, LogOut, Plus, Edit, Trash2, CheckCircle2, ShieldCheck, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useToast } from '../../components/common/Toast';
 import CustomerAuthModal from '../../components/website/CustomerAuthModal';
+import MaterialIcon from '../../components/common/MaterialIcon';
 
 const Account = () => {
   const { customer, logoutCustomer, loginCustomer } = useAuth();
   const navigate = useNavigate();
+  const { showSuccess, showError, confirm } = useToast();
 
-  const [activeTab, setActiveTab] = useState('PROFILE'); // 'PROFILE' | 'ADDRESSES' | 'ORDERS'
+  const [activeTab, setActiveTab] = useState('PROFILE'); // 'PROFILE' | 'ADDRESSES'
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [name, setName] = useState(customer?.name || '');
@@ -19,7 +21,6 @@ const Account = () => {
   const [addresses, setAddresses] = useState(customer?.addresses || []);
   const [newAddress, setNewAddress] = useState('');
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     if (customer) {
@@ -32,20 +33,21 @@ const Account = () => {
 
   if (!customer) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-emerald-50 text-[#0D4715] rounded-full flex items-center justify-center mx-auto mb-4 font-bold">
-            <User className="w-8 h-8" />
+      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-slate-50 px-4">
+        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 max-w-md w-full text-center space-y-4">
+          <div className="w-16 h-16 bg-emerald-100 text-[#0D4715] rounded-2xl flex items-center justify-center mx-auto shadow-xs">
+            <MaterialIcon name="manage_accounts" size={32} />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">My Account</h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Please log in with your mobile number to view your profile, saved addresses, and live order updates.
+          <h2 className="text-2xl font-black text-slate-900">My Account</h2>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Please log in with your mobile phone number to view your profile, manage saved delivery addresses, and track real-time orders.
           </p>
           <button
             onClick={() => setAuthModalOpen(true)}
-            className="w-full py-3 bg-[#0D4715] text-white font-bold text-sm rounded-xl shadow-lg hover:bg-[#1b6b25] transition cursor-pointer"
+            className="w-full py-3.5 bg-[#0D4715] hover:bg-[#1b5e20] text-white font-bold text-xs rounded-2xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
           >
-            Login with Mobile OTP
+            <MaterialIcon name="lock" size={16} />
+            <span>Login with Mobile OTP</span>
           </button>
         </div>
         {authModalOpen && (
@@ -70,11 +72,10 @@ const Account = () => {
       setSaving(false);
       loginCustomer(res.data.customer);
       setEditingProfile(false);
-      setMessage('Profile updated successfully!');
-      setTimeout(() => setMessage(null), 3000);
+      showSuccess('Profile updated successfully!');
     } catch (err) {
       setSaving(false);
-      alert(err.response?.data?.message || 'Failed to update profile');
+      showError(err.response?.data?.message || 'Failed to update profile');
     }
   };
 
@@ -85,7 +86,6 @@ const Account = () => {
     setAddresses(updated);
     setNewAddress('');
     
-    // Save to server
     try {
       const payload = {
         id: customer.id,
@@ -96,27 +96,37 @@ const Account = () => {
       };
       const res = await axios.post('/website/customer/profile', payload);
       loginCustomer(res.data.customer);
+      showSuccess('Delivery address added successfully!');
     } catch (e) {
-      console.error(e);
+      showError('Failed to save address.');
     }
   };
 
-  const handleDeleteAddress = async (index) => {
-    const updated = addresses.filter((_, i) => i !== index);
-    setAddresses(updated);
-    try {
-      const payload = {
-        id: customer.id,
-        name: customer.name,
-        mobile: customer.mobile,
-        email: customer.email,
-        addresses: updated
-      };
-      const res = await axios.post('/website/customer/profile', payload);
-      loginCustomer(res.data.customer);
-    } catch (e) {
-      console.error(e);
-    }
+  const handleDeleteAddress = (index) => {
+    confirm({
+      title: 'Remove Address',
+      message: 'Are you sure you want to remove this delivery address from your profile?',
+      confirmText: 'Remove',
+      isDanger: true,
+      onConfirm: async () => {
+        const updated = addresses.filter((_, i) => i !== index);
+        setAddresses(updated);
+        try {
+          const payload = {
+            id: customer.id,
+            name: customer.name,
+            mobile: customer.mobile,
+            email: customer.email,
+            addresses: updated
+          };
+          const res = await axios.post('/website/customer/profile', payload);
+          loginCustomer(res.data.customer);
+          showSuccess('Address removed.');
+        } catch (e) {
+          showError('Failed to remove address.');
+        }
+      }
+    });
   };
 
   const handleLogout = () => {
@@ -125,24 +135,24 @@ const Account = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-50/60 min-h-screen py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Banner Card */}
-        <div className="bg-gradient-to-r from-[#0D4715] to-[#1b6b25] text-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-gradient-to-r from-[#0D4715] to-[#1b5e20] text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl font-black text-white">
+            <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl font-black text-white shadow-inner">
               {customer.name ? customer.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{customer.name || 'Valued Customer'}</h1>
-              <div className="flex items-center gap-3 text-xs text-emerald-100 mt-1">
-                <span className="flex items-center gap-1 font-semibold">
-                  <Phone className="w-3.5 h-3.5" /> +91 {customer.mobile}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-emerald-100 mt-1">
+                <span className="flex items-center gap-1 font-bold">
+                  <MaterialIcon name="call" size={14} /> +91 {customer.mobile}
                 </span>
                 {customer.email && (
-                  <span className="flex items-center gap-1 font-semibold">
-                    <Mail className="w-3.5 h-3.5" /> {customer.email}
+                  <span className="flex items-center gap-1 font-medium">
+                    <MaterialIcon name="mail" size={14} /> {customer.email}
                   </span>
                 )}
               </div>
@@ -151,32 +161,25 @@ const Account = () => {
           
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-600/30 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition border border-white/10 cursor-pointer"
+            className="flex items-center gap-2 bg-rose-600/30 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition border border-white/10 cursor-pointer shadow-sm"
           >
-            <LogOut className="w-4 h-4" />
+            <MaterialIcon name="logout" size={16} />
             <span>Logout</span>
           </button>
         </div>
 
-        {message && (
-          <div className="mb-6 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            {message}
-          </div>
-        )}
-
         {/* Tab Navigation */}
-        <div className="grid grid-cols-3 gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-200 mb-8">
+        <div className="grid grid-cols-3 gap-2 bg-white p-2 rounded-2xl shadow-xs border border-slate-200">
           <button
             onClick={() => setActiveTab('PROFILE')}
             className={`py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === 'PROFILE'
                 ? 'bg-[#0D4715] text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <User className="w-4 h-4" />
-            <span>Profile Details</span>
+            <MaterialIcon name="person" size={18} />
+            <span>Profile</span>
           </button>
 
           <button
@@ -184,34 +187,37 @@ const Account = () => {
             className={`py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === 'ADDRESSES'
                 ? 'bg-[#0D4715] text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <MapPin className="w-4 h-4" />
-            <span>Saved Addresses ({addresses.length})</span>
+            <MaterialIcon name="location_on" size={18} />
+            <span>Addresses ({addresses.length})</span>
           </button>
 
           <Link
             to="/my-orders"
-            className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 transition"
+            className="py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100 transition"
           >
-            <Package className="w-4 h-4 text-[#0D4715]" />
-            <span>My Orders & Tracking</span>
+            <MaterialIcon name="receipt_long" size={18} className="text-[#0D4715]" />
+            <span>My Orders</span>
           </Link>
         </div>
 
         {/* TAB 1: PROFILE DETAILS */}
         {activeTab === 'PROFILE' && (
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-md border border-gray-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-black text-gray-900">Personal Information</h2>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <MaterialIcon name="badge" size={20} className="text-[#0D4715]" />
+                Personal Information
+              </h2>
               {!editingProfile && (
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-[#0D4715] hover:underline cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#0D4715] hover:text-emerald-700 cursor-pointer"
                 >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit Profile</span>
+                  <MaterialIcon name="edit" size={16} />
+                  <span>Edit Details</span>
                 </button>
               )}
             </div>
@@ -219,7 +225,7 @@ const Account = () => {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Full Name
                   </label>
                   <input
@@ -227,28 +233,28 @@ const Account = () => {
                     disabled={!editingProfile}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 disabled:opacity-75 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 disabled:opacity-75 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Mobile Number (Verified)
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <input
                       type="text"
                       disabled
                       value={`+91 ${mobile}`}
-                      className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 cursor-not-allowed"
                     />
-                    <ShieldCheck className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                    <MaterialIcon name="verified" size={20} className="absolute right-3.5 text-emerald-600" filled />
                   </div>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Email Address
                   </label>
                   <input
@@ -257,24 +263,24 @@ const Account = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Add your email address"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 disabled:opacity-75 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 disabled:opacity-75 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                   />
                 </div>
               </div>
 
               {editingProfile && (
-                <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-2.5 bg-[#0D4715] text-white font-bold text-xs rounded-xl shadow-md hover:bg-[#1b6b25] transition cursor-pointer"
+                    className="px-6 py-2.5 bg-[#0D4715] text-white font-bold text-xs rounded-xl shadow-md hover:bg-[#1b5e20] transition cursor-pointer"
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingProfile(false)}
-                    className="px-6 py-2.5 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition cursor-pointer"
+                    className="px-6 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-300 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -288,22 +294,25 @@ const Account = () => {
         {activeTab === 'ADDRESSES' && (
           <div className="space-y-6">
             {/* Add New Address Form */}
-            <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
-              <h3 className="text-base font-black text-gray-900 mb-3">Add New Delivery Address</h3>
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 space-y-3">
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <MaterialIcon name="add_location_alt" size={20} className="text-[#0D4715]" />
+                Add New Delivery Address
+              </h3>
               <form onSubmit={handleAddAddress} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
                   placeholder="Enter house no, street, landmark, city, pincode"
-                  className="flex-grow px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-900 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                  className="flex-grow px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-[#0D4715] text-white font-bold text-xs rounded-xl shadow-md hover:bg-[#1b6b25] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="px-6 py-3 bg-[#0D4715] text-white font-bold text-xs rounded-2xl shadow-md hover:bg-[#1b5e20] transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <Plus className="w-4 h-4" />
+                  <MaterialIcon name="add" size={18} />
                   <span>Add Address</span>
                 </button>
               </form>
@@ -312,33 +321,36 @@ const Account = () => {
             {/* Addresses List */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((addr, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-2xl shadow-xs border border-gray-200 flex justify-between items-start relative group">
+                <div key={idx} className="bg-white p-5 rounded-3xl shadow-xs border border-slate-200/80 flex justify-between items-start relative group">
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#0D4715] flex items-center justify-center font-bold text-sm shrink-0">
-                      <MapPin className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-[#0D4715] flex items-center justify-center font-bold text-sm shrink-0">
+                      <MaterialIcon name="location_on" size={18} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-[#0D4715] px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-black uppercase bg-emerald-100 text-[#0D4715] px-2 py-0.5 rounded-md">
                         Address #{idx + 1}
                       </span>
-                      <p className="text-xs font-bold text-gray-800 mt-2 leading-relaxed">{addr}</p>
+                      <p className="text-xs font-semibold text-slate-800 mt-2 leading-relaxed">{addr}</p>
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleDeleteAddress(idx)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition cursor-pointer"
+                    className="p-1.5 text-slate-400 hover:text-rose-600 transition cursor-pointer rounded-lg hover:bg-rose-50"
                     title="Remove address"
+                    aria-label="Remove address"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <MaterialIcon name="delete" size={18} />
                   </button>
                 </div>
               ))}
 
               {addresses.length === 0 && (
-                <div className="md:col-span-2 bg-white p-8 rounded-2xl text-center border border-gray-200">
-                  <MapPin className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-gray-500">No saved addresses yet.</p>
+                <div className="md:col-span-2 bg-white p-10 rounded-3xl text-center border border-slate-200/80">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                    <MaterialIcon name="wrong_location" size={24} />
+                  </div>
+                  <p className="text-xs font-bold text-slate-500">No saved addresses yet. Add an address above for fast checkout.</p>
                 </div>
               )}
             </div>

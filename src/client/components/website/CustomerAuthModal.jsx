@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Phone, ShieldCheck, User, Mail, MapPin, ArrowRight, CheckCircle2, X } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import MaterialIcon from '../common/MaterialIcon';
 
 const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
   const { loginCustomer } = useAuth();
@@ -47,7 +47,6 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
       }
       setLoading(false);
       const simulatedOtp = res.data?.otp || '1234';
-      console.log(`[OTP] Sent to ${cleanMobile}: ${simulatedOtp}`);
       showToast(`🔑 Test OTP for ${cleanMobile} is ${simulatedOtp}`);
       setStep('OTP');
     } catch (err) {
@@ -114,37 +113,38 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
         
         {/* Toast Alert Banner */}
         {toastMessage && (
           <div className="bg-[#0D4715] text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between shadow-md">
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <MaterialIcon name="check_circle" size={16} className="text-emerald-400" filled />
               {toastMessage}
             </span>
-            <button onClick={() => setToastMessage(null)} className="text-white/80 hover:text-white">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setToastMessage(null)} className="text-white/80 hover:text-white p-1 cursor-pointer">
+              <MaterialIcon name="close" size={14} />
             </button>
           </div>
         )}
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-[#0D4715] to-[#1b6b25] text-white p-6 relative">
+        <div className="bg-gradient-to-r from-[#0D4715] to-[#1b5e20] text-white p-6 relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition cursor-pointer"
+            aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <MaterialIcon name="close" size={20} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-white border border-white/20">
-              <Phone className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center font-bold text-white border border-white/20 shadow-inner">
+              <MaterialIcon name="phone_iphone" size={22} />
             </div>
             <div>
-              <h3 className="text-lg font-black tracking-tight">Customer Login</h3>
-              <p className="text-xs text-emerald-100 font-medium">Quick & secure OTP access</p>
+              <h3 className="text-lg font-black tracking-tight">Customer Access</h3>
+              <p className="text-xs text-emerald-200 font-medium">Quick and secure OTP login</p>
             </div>
           </div>
         </div>
@@ -152,8 +152,9 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Modal Body */}
         <div className="p-6">
           {errorMessage && (
-            <div className="mb-4 bg-red-50 text-red-600 border border-red-200 text-xs font-semibold px-3 py-2 rounded-lg">
-              {errorMessage}
+            <div className="mb-4 bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+              <MaterialIcon name="error" size={16} className="text-rose-600 shrink-0" filled />
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -161,11 +162,11 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
           {step === 'MOBILE' && (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Mobile Phone Number
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-slate-400 text-sm font-black">
                     +91
                   </span>
                   <input
@@ -173,25 +174,25 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
                     maxLength={10}
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter 10 digit mobile number"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
+                    placeholder="Enter 10-digit mobile"
+                    className="w-full pl-14 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
                     required
                   />
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500">
-                  We'll send a 4-digit test OTP to this number.
+                <p className="mt-1.5 text-[11px] text-slate-500 font-medium">
+                  We will send a 4-digit verification code to this mobile.
                 </p>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#0D4715] hover:bg-[#1b6b25] text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 bg-[#0D4715] hover:bg-[#1b5e20] text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                {loading ? 'Sending OTP...' : (
+                {loading ? 'Sending Code...' : (
                   <>
                     <span>Send Verification Code</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <MaterialIcon name="arrow_forward" size={16} />
                   </>
                 )}
               </button>
@@ -201,44 +202,46 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
           {/* STEP 2: VERIFY OTP */}
           {step === 'OTP' && (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-xs text-emerald-800 font-medium">
-                OTP sent to <span className="font-bold text-[#0D4715]">+91 {mobile}</span>.{' '}
+              <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-xs text-emerald-800 font-medium flex items-center justify-between">
+                <span>Code sent to <strong className="text-[#0D4715]">+91 {mobile}</strong></span>
                 <button
                   type="button"
                   onClick={() => setStep('MOBILE')}
-                  className="underline text-emerald-700 font-bold ml-1"
+                  className="underline text-emerald-700 font-bold ml-1 cursor-pointer"
                 >
                   Change
                 </button>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Enter 4-Digit OTP
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Enter 4-Digit Code
                 </label>
-                <div className="relative">
-                  <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="relative flex items-center">
+                  <div className="absolute left-3.5 pointer-events-none text-slate-400">
+                    <MaterialIcon name="lock" size={18} />
+                  </div>
                   <input
                     type="text"
                     maxLength={4}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 1234"
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-center text-lg font-black tracking-widest text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
+                    placeholder="1234"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
                     required
                   />
                 </div>
-                <p className="mt-1 text-[11px] text-emerald-600 font-semibold">
-                  (Temporary testing OTP: <strong className="text-emerald-800 font-extrabold">1234</strong>)
+                <p className="mt-1.5 text-[11px] text-emerald-700 font-bold">
+                  (Test verification code: <strong>1234</strong>)
                 </p>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#0D4715] hover:bg-[#1b6b25] text-white font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 bg-[#0D4715] hover:bg-[#1b5e20] text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                {loading ? 'Verifying...' : 'Verify & Continue'}
+                {loading ? 'Verifying...' : 'Verify & Sign In'}
               </button>
             </form>
           )}
@@ -246,49 +249,55 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
           {/* STEP 3: COMPLETE PROFILE */}
           {step === 'PROFILE' && (
             <form onSubmit={handleSaveProfile} className="space-y-3">
-              <div className="text-xs text-gray-600 font-medium mb-1">
+              <div className="text-xs text-slate-600 font-medium mb-1">
                 Please complete your customer profile to place orders & track delivery.
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">Full Name *</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Full Name *</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-slate-400">
+                    <MaterialIcon name="person" size={16} />
+                  </div>
                   <input
                     type="text"
                     value={profileData.name}
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                     placeholder="e.g. Murali Krishna"
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">Email Address (Optional)</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Email Address (Optional)</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-slate-400">
+                    <MaterialIcon name="mail" size={16} />
+                  </div>
                   <input
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     placeholder="murali@example.com"
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">Delivery Address</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Delivery Address</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-slate-400">
+                    <MaterialIcon name="location_on" size={16} />
+                  </div>
                   <input
                     type="text"
                     value={profileData.street}
                     onChange={(e) => setProfileData({ ...profileData, street: e.target.value })}
                     placeholder="Flat / House No, Street"
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#0D4715]"
                   />
                 </div>
               </div>
@@ -300,7 +309,7 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
                     value={profileData.city}
                     onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
                     placeholder="City"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
                   />
                 </div>
                 <div>
@@ -309,7 +318,7 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
                     value={profileData.pincode}
                     onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })}
                     placeholder="Pincode"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
                   />
                 </div>
               </div>
@@ -317,7 +326,7 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 bg-[#0D4715] hover:bg-[#1b6b25] text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full mt-2 py-3.5 bg-[#0D4715] hover:bg-[#1b5e20] text-white font-bold text-xs rounded-2xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? 'Saving Profile...' : 'Save & Complete Profile'}
               </button>
