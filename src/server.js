@@ -48,6 +48,14 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/', routes);
 app.use('/api', routes);
 
+// Health check and root route
+app.get('/', (req, res) => {
+    res.json({ status: "ok", message: "Buykart Backend API is running successfully!" });
+});
+app.get('/health', (req, res) => {
+    res.json({ status: "ok" });
+});
+
 // Handle 404 for API endpoints
 app.use((req, res) => {
     res.status(404).json({ message: "API endpoint not found" });
