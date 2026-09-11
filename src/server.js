@@ -1,3 +1,4 @@
+// Buykart Server - API Services
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -44,17 +45,20 @@ app.use((req, res, next) => {
 // Serve static files (CSS, JS, Images) from the 'public' directory
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
-// Use API routes (support both root '/' and '/api' prefixes)
-app.use('/', routes);
-app.use('/api', routes);
-
-// Health check and root route
+// Health check and root route (must be before route handlers)
 app.get('/', (req, res) => {
     res.json({ status: "ok", message: "Buykart Backend API is running successfully!" });
 });
 app.get('/health', (req, res) => {
     res.json({ status: "ok" });
 });
+app.get('/api/health', (req, res) => {
+    res.json({ status: "ok" });
+});
+
+// Use API routes (support both root '/' and '/api' prefixes)
+app.use('/', routes);
+app.use('/api', routes);
 
 // Handle 404 for API endpoints
 app.use((req, res) => {

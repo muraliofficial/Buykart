@@ -20,7 +20,7 @@ const ProductModal = ({ product, onClose }) => {
         {/* Header Image Box */}
         <div className="relative h-64 bg-gray-50 overflow-hidden">
           <img
-            src={getProductImageUrl(product)}
+            src={getProductImageUrl(product, 'jpg_700')}
             alt={product.itemName || 'Product item'}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -88,9 +88,10 @@ const ProductModal = ({ product, onClose }) => {
                 </button>
                 <span className="font-extrabold text-[#0D4715] text-lg px-4">{qty} in Cart</span>
                 <button
+                  disabled={qty >= stock}
                   onClick={() => updateQuantity(product.id, 1)}
-                  className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer"
-                  title="Increase quantity"
+                  className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={qty >= stock ? 'Maximum stock reached' : 'Increase quantity'}
                   aria-label="Increase quantity"
                 >
                   <MaterialIcon name="add" size={20} />

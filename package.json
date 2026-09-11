@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node ./src/server.js",
-    "dev:server": "node ./src/server.js",
+    "dev:server": "node --watch --watch-path=./src/server.js --watch-path=./src/api ./src/server.js",
     "dev:client": "vite --host",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vite build",
@@ -31,7 +31,6 @@
     "googleapis": "^169.0.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.28.0",
-    "multer": "^2.1.1",
     "react": "^19.2.8",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.8",

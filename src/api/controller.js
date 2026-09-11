@@ -2,7 +2,7 @@ const { db } = require('./firebase');
 const path = require('path');
 const fs = require('fs').promises;
 const bcrypt = require('bcryptjs');
-const { uploadToCloudinary } = require('./utils/cloudinary');
+const { uploadBase64ToCloudinary } = require('./utils/cloudinary');
 
 const SALT_ROUNDS = 10;
 const COLLECTION_NAME = 'products';
@@ -22,7 +22,7 @@ exports.createProduct = async (req, res) => {
 
 exports.addInventory = async (req, res) => {
     try {
-        const { category, itemName, unit, price, op_stock, description } = req.body;
+        const { category, itemName, unit, price, op_stock, description, imageBase64 } = req.body;
         
         // Basic validation
         if (!itemName || !unit || !price || !op_stock || !category) {
@@ -32,9 +32,9 @@ exports.addInventory = async (req, res) => {
         let image = {};
         let imageId = '';
 
-        if (req.file) {
+        if (imageBase64) {
             try {
-                const result = await uploadToCloudinary(req.file.buffer);
+                const result = await uploadBase64ToCloudinary(imageBase64);
                 image = result.secure_url;
                 imageId = result.public_id;
             } catch (uploadErr) {
@@ -74,9 +74,9 @@ exports.updateInventory = async (req, res) => {
 
         updateData.updatedAt = new Date().toISOString();
         
-        if (req.file) {
+        if (req.body.imageBase64) {
             // Upload new image to Cloudinary
-            const result = await uploadToCloudinary(req.file.buffer);
+            const result = await uploadBase64ToCloudinary(req.body.imageBase64);
             updateData.image = result.secure_url;
             updateData.imageId = result.public_id;
             

@@ -90,3 +90,14 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #41644A;
 }
+
+/* Print Media Styles: Clean Physical Slip Isolation */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, footer, nav, [role="navigation"], .print\:hidden {
+    display: none !important;
+  }
+}

@@ -190,8 +190,12 @@ const PackingModal = ({ order, isOpen, onClose, onSuccess }) => {
               disabled={loading}
               className="px-6 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <MaterialIcon name="check" size={16} />
-              <span>{loading ? 'Saving...' : 'Mark Order as Packed'}</span>
+              <MaterialIcon
+                name={loading ? 'sync' : 'check'}
+                size={16}
+                className={loading ? 'animate-spin' : ''}
+              />
+              <span>{loading ? 'Saving Packing Details...' : 'Mark Order as Packed'}</span>
             </button>
           </div>
         </form>

@@ -263,7 +263,7 @@ const Cart = () => {
                       <div className="flex items-center gap-4 w-full sm:w-auto flex-1 min-w-0">
                         <div className="relative shrink-0">
                           <img
-                            src={getProductImageUrl(item)}
+                            src={getProductImageUrl(item, 'jpg_300')}
                             alt={item.itemName}
                             className="w-20 h-20 sm:w-22 sm:h-22 object-cover rounded-2xl bg-slate-50 border border-slate-100 group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
@@ -317,9 +317,11 @@ const Cart = () => {
                           </span>
 
                           <button
+                            disabled={item.op_stock !== undefined && item.quantity >= Number(item.op_stock)}
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-xs text-slate-700 hover:text-emerald-700 transition font-bold cursor-pointer hover:scale-105 active:scale-95"
+                            className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-xs text-slate-700 hover:text-emerald-700 transition font-bold cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                             aria-label="Increase quantity"
+                            title={item.op_stock !== undefined && item.quantity >= Number(item.op_stock) ? 'Maximum stock reached' : 'Increase quantity'}
                           >
                             <MaterialIcon name="add" size={15} />
                           </button>

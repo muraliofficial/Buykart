@@ -187,15 +187,20 @@ exports.checkout = async (req, res) => {
 
         // Create Order Record in 'orders' collection
         const totalCalc = itemsList.reduce((sum, i) => sum + Number(i.price || 0) * (i.quantity || 1), 0);
+        const discountAmount = Number(shippingDetails?.discount || 0);
+        const finalTotal = Math.max(0, totalCalc - discountAmount);
         
         const orderData = {
-            userId: userId || customerId || 'Guest',
+            userId: userId || customerId || req.customer?.id || 'Customer',
             userName: userName || customerName || shippingDetails?.fullName || 'Customer',
-            customerId: customerId || userId || null,
+            customerId: customerId || userId || req.customer?.id || null,
             customerName: customerName || userName || shippingDetails?.fullName || 'Customer',
-            customerMobile: customerMobile || shippingDetails?.phone || '',
+            customerMobile: customerMobile || shippingDetails?.phone || req.customer?.mobile || '',
             items: cart,
-            total: totalCalc,
+            subtotal: totalCalc,
+            discount: discountAmount,
+            appliedCoupon: shippingDetails?.appliedCoupon || null,
+            total: finalTotal,
             paymentMethod: shippingDetails?.paymentMethod || 'COD',
             paymentStatus: 'Pending',
             deliveryAddress: shippingDetails?.address ? `${shippingDetails.address}, Pincode: ${shippingDetails.pincode}` : '',
@@ -212,22 +217,30 @@ exports.checkout = async (req, res) => {
     }
 };
 
-// 8. Get Customer Orders (Filtered server-side if customerId or mobile query parameter is present)
+// 8. Get Customer Orders (Protected: restricted to verified customer identity)
 exports.getOrders = async (req, res) => {
     try {
-        const { customerId, mobile } = req.query;
+        const authCustomerId = req.customer?.id;
+        const authCustomerMobile = req.customer?.mobile;
+
+        const customerId = authCustomerId || req.query.customerId;
+        const mobile = authCustomerMobile || req.query.mobile;
+
+        // Security check: Never expose full database of customer orders to public callers
+        if (!customerId && !mobile) {
+            return res.status(200).json([]);
+        }
+
         const snapshot = await db.collection(COLLECTION_ORDERS).orderBy('createdAt', 'desc').get();
         let orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        if (customerId || mobile) {
-            const cleanCustId = customerId ? String(customerId).trim() : null;
-            const cleanMob = mobile ? String(mobile).trim() : null;
+        const cleanCustId = customerId ? String(customerId).trim() : null;
+        const cleanMob = mobile ? String(mobile).trim() : null;
 
-            orders = orders.filter(o =>
-                (cleanCustId && (o.userId === cleanCustId || o.customerId === cleanCustId)) ||
-                (cleanMob && (o.customerMobile === cleanMob || o.shippingDetails?.phone === cleanMob))
-            );
-        }
+        orders = orders.filter(o =>
+            (cleanCustId && (o.userId === cleanCustId || o.customerId === cleanCustId)) ||
+            (cleanMob && (o.customerMobile === cleanMob || o.shippingDetails?.phone === cleanMob))
+        );
 
         res.status(200).json(orders);
     } catch (error) {

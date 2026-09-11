@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import MaterialIcon from '../../components/common/MaterialIcon';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
+import logoImg from '../../assets/logo.png';
 
 const Login = () => {
   const { login, loading } = useAuth();
@@ -38,11 +39,10 @@ const Login = () => {
       <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner text-[#E9762B]">
-            <MaterialIcon name="shopping_bag" size={36} />
+          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner overflow-hidden">
+            <img src={logoImg} alt="Buykart Logo" className="w-full h-full object-contain p-2" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">Buykart Admin</h1>
-          <p className="text-xs text-emerald-100 font-medium">Log in to manage orders, inventory, and operations</p>
         </div>
 
         {/* Alert Error Message */}
@@ -108,7 +108,7 @@ const Login = () => {
             ) : (
               <>
                 <MaterialIcon name="login" size={18} />
-                <span>Log In to Dashboard</span>
+                <span>Log In</span>
               </>
             )}
           </button>
@@ -122,12 +122,6 @@ const Login = () => {
               Create New Account
             </Link>
           </p>
-          <div className="pt-1">
-            <Link to="/" className="text-xs font-semibold text-emerald-200/80 hover:text-white flex items-center justify-center gap-1">
-              <MaterialIcon name="arrow_back" size={14} />
-              <span>Back to Customer Store</span>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

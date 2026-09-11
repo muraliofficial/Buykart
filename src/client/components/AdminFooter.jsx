@@ -12,14 +12,14 @@ const AdminFooter = () => {
         </div>
 
         <div className="flex items-center gap-1.5 font-semibold text-slate-300">
-          <span>Engineered by</span>
+          <span>Crafted by</span>
           <a
             href="http://my-self-murali.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-emerald-400 font-extrabold underline hover:text-emerald-300 transition"
           >
-            Murali (App Creator)
+            Murali <span className='text-red-600'>❤</span>
           </a>
         </div>
       </div>

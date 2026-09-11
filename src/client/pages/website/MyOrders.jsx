@@ -1073,7 +1073,7 @@ const MyOrders = () => {
                           <div key={idx} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                               <img
-                                src={getProductImageUrl(item)}
+                                src={getProductImageUrl(item, 'jpg_300')}
                                 alt={item.itemName || item.name}
                                 className="w-12 h-12 rounded-xl object-cover bg-white shrink-0 border border-slate-200/80 shadow-2xs"
                                 onError={(e) => {

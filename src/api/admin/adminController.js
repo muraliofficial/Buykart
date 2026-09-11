@@ -2,7 +2,7 @@ const { db } = require('../firebase');
 const path = require('path');
 const fs = require('fs').promises;
 const bcrypt = require('bcryptjs');
-const { uploadToCloudinary } = require('../utils/cloudinary');
+const { uploadBase64ToCloudinary, deleteFromCloudinary, generateImageVariants, cloudinary } = require('../utils/cloudinary');
 const { generateToken } = require('../middleware/authMiddleware');
 
 const SALT_ROUNDS = 10;
@@ -28,30 +28,31 @@ const restockOrderItems = async (orderData) => {
     }
 };
 
-// --- INVENTORY MANAGEMENT controllers ---
+// --- INVENTORY MANAGEMENT controllers (Direct Cloudinary base64 upload - no multer) ---
 exports.addInventory = async (req, res) => {
     try {
-        const { category, itemName, unit, price, op_stock, description } = req.body;
+        const { category, itemName, unit, price, op_stock, description, imageBase64, image: existingImage } = req.body;
         
         let image = {};
         let imageId = '';
 
-        if (req.file) {
+        // Check if an image is provided as Base64 data URI or HTTP URL
+        const imagePayload = imageBase64 || (typeof existingImage === 'string' && existingImage.startsWith('data:') ? existingImage : null);
+
+        if (imagePayload) {
             try {
-                const result = await uploadToCloudinary(req.file.buffer);
-                image = result.secure_url;
+                const result = await uploadBase64ToCloudinary(imagePayload);
+                image = generateImageVariants(result.secure_url);
                 imageId = result.public_id;
             } catch (uploadErr) {
                 console.error('[AddInventory] Cloudinary upload error:', uploadErr);
                 return res.status(500).json({ 
                     success: false, 
-                    message: `Image upload failed: ${uploadErr.message || 'Cloudinary service error'}` 
+                    message: `Cloudinary upload failed: ${uploadErr.message || 'Service error'}` 
                 });
             }
-        } else {
-            // Optional image: store empty object {} per specification
-            image = {};
-            imageId = '';
+        } else if (typeof existingImage === 'string' && existingImage.startsWith('http')) {
+            image = generateImageVariants(existingImage);
         }
 
         const newInventory = {
@@ -77,7 +78,7 @@ exports.addInventory = async (req, res) => {
 exports.updateInventory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { category, itemName, unit, price, op_stock, description, removeImage } = req.body;
+        const { category, itemName, unit, price, op_stock, description, removeImage, imageBase64, image: existingImage } = req.body;
         const updateData = { category, itemName, unit, description };
 
         if (price !== undefined) updateData.price = Number(price);
@@ -86,25 +87,51 @@ exports.updateInventory = async (req, res) => {
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
         updateData.updatedAt = new Date().toISOString();
         
-        if (req.file) {
+        // Fetch current document to know existing imageId for cleanup if needed
+        let existingDocData = null;
+        const itemRef = db.collection(COLLECTION_INVENTORY).doc(id);
+
+        const imagePayload = imageBase64 || (typeof existingImage === 'string' && existingImage.startsWith('data:') ? existingImage : null);
+
+        if (imagePayload) {
             try {
-                const result = await uploadToCloudinary(req.file.buffer);
-                updateData.image = result.secure_url;
+                const docSnap = await itemRef.get();
+                if (docSnap.exists) {
+                    existingDocData = docSnap.data();
+                }
+
+                const result = await uploadBase64ToCloudinary(imagePayload);
+                updateData.image = generateImageVariants(result.secure_url);
                 updateData.imageId = result.public_id;
+
+                // Delete replaced previous image from Cloudinary in background
+                if (existingDocData && existingDocData.imageId) {
+                    deleteFromCloudinary(existingDocData.imageId);
+                }
             } catch (uploadErr) {
                 console.error('[UpdateInventory] Cloudinary upload error:', uploadErr);
                 return res.status(500).json({ 
                     success: false, 
-                    message: `Image upload failed: ${uploadErr.message || 'Cloudinary service error'}` 
+                    message: `Cloudinary upload failed: ${uploadErr.message || 'Service error'}` 
                 });
             }
         } else if (removeImage === 'true' || removeImage === true) {
-            // User requested explicit removal of existing image
+            try {
+                const docSnap = await itemRef.get();
+                if (docSnap.exists) {
+                    existingDocData = docSnap.data();
+                }
+                if (existingDocData && existingDocData.imageId) {
+                    deleteFromCloudinary(existingDocData.imageId);
+                }
+            } catch (cleanupErr) {
+                console.warn('[UpdateInventory] Cloudinary cleanup notice:', cleanupErr.message);
+            }
             updateData.image = {};
             updateData.imageId = '';
         }
 
-        await db.collection(COLLECTION_INVENTORY).doc(id).update(updateData);
+        await itemRef.update(updateData);
         res.status(200).json({ success: true, message: 'Inventory item updated successfully' });
     } catch (error) {
         console.error('[UpdateInventory] Internal error:', error);
@@ -115,7 +142,15 @@ exports.updateInventory = async (req, res) => {
 exports.deleteInventory = async (req, res) => {
     try {
         const { id } = req.params;
-        await db.collection(COLLECTION_INVENTORY).doc(id).delete();
+        const itemRef = db.collection(COLLECTION_INVENTORY).doc(id);
+        const docSnap = await itemRef.get();
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.imageId) {
+                deleteFromCloudinary(data.imageId);
+            }
+        }
+        await itemRef.delete();
         res.status(200).json({ success: true, message: 'Inventory item deleted successfully' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

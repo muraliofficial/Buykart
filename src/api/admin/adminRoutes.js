@@ -1,31 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const controller = require('./adminController');
 const validation = require('./adminValidation');
 const { validate } = require('../middleware/validator');
 const { authenticateAdmin } = require('../middleware/authMiddleware');
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-// Admin Staff Login (unprotected)
+// Admin Staff Login and Registration (unprotected)
 router.post('/login', controller.login);
+router.post('/addUser', controller.addUser);
 
 router.use(authenticateAdmin);
 
-// Admin Users
-router.post('/addUser', controller.addUser);
+// Admin Users (protected)
 router.get('/getUsers', controller.getUsers);
 router.get('/users', controller.getUsers);
 
-// Inventory routes with validation
+// Inventory routes (Direct Cloudinary base64 JSON upload - no multer)
 router.get('/getInventory', controller.getInventory);
 router.get('/inventory', controller.getInventory);
-router.post('/addInventory', upload.single('inventoryImage'), validate([validation.validateAddInventory]), controller.addInventory);
-router.post('/inventory', upload.single('inventoryImage'), validate([validation.validateAddInventory]), controller.addInventory);
-router.put('/updateInventory/:id', upload.single('inventoryImage'), controller.updateInventory);
-router.put('/inventory/:id', upload.single('inventoryImage'), controller.updateInventory);
+router.post('/addInventory', validate([validation.validateAddInventory]), controller.addInventory);
+router.post('/inventory', validate([validation.validateAddInventory]), controller.addInventory);
+router.put('/updateInventory/:id', controller.updateInventory);
+router.put('/inventory/:id', controller.updateInventory);
 router.delete('/deleteInventory/:id', controller.deleteInventory);
 router.delete('/inventory/:id', controller.deleteInventory);
 

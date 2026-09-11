@@ -15,9 +15,11 @@ const isPublicAuthRoute = (req) => {
         path.includes('/login') ||
         path.includes('/verify-otp') ||
         path.includes('/send-otp') ||
+        path.includes('/adduser') ||
         originalUrl.includes('/login') ||
         originalUrl.includes('/verify-otp') ||
-        originalUrl.includes('/send-otp')
+        originalUrl.includes('/send-otp') ||
+        originalUrl.includes('/adduser')
     );
 };
 
@@ -30,7 +32,7 @@ const authenticateAdmin = (req, res, next) => {
     }
 
     if (!authHeader) {
-        return next();
+        return res.status(401).json({ success: false, message: 'Authentication required. Authorization header missing.' });
     }
 
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
@@ -53,7 +55,7 @@ const authenticateRider = (req, res, next) => {
     }
 
     if (!authHeader) {
-        return next();
+        return res.status(401).json({ success: false, message: 'Rider authentication required. Authorization header missing.' });
     }
 
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
@@ -76,7 +78,7 @@ const authenticateCustomer = (req, res, next) => {
     }
 
     if (!authHeader) {
-        return next();
+        return res.status(401).json({ success: false, message: 'Customer authentication required. Authorization header missing.' });
     }
 
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;

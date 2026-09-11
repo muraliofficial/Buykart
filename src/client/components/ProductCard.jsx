@@ -17,7 +17,7 @@ const ProductCard = ({ product, onCardClick }) => {
         className="relative h-52 overflow-hidden bg-gray-50 cursor-pointer"
       >
         <img
-          src={getProductImageUrl(product)}
+          src={getProductImageUrl(product, 'jpg_300')}
           alt={product.itemName || 'Product item'}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
           onError={(e) => {
@@ -75,9 +75,10 @@ const ProductCard = ({ product, onCardClick }) => {
               </button>
               <span className="font-extrabold text-[#0D4715] text-base px-3">{qty}</span>
               <button
+                disabled={qty >= stock}
                 onClick={() => updateQuantity(product.id, 1)}
-                className="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer"
-                title="Increase quantity"
+                className="w-9 h-9 flex items-center justify-center bg-white rounded-lg shadow-xs text-[#0D4715] hover:bg-gray-100 transition font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                title={qty >= stock ? 'Maximum stock reached' : 'Increase quantity'}
                 aria-label="Increase quantity"
               >
                 <MaterialIcon name="add" size={18} />

@@ -1,8 +1,10 @@
 {
+  "version": 2,
   "buildCommand": "vite build",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/(api|website|admin|ontime|public)(.*)", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

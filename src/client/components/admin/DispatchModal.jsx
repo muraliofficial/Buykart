@@ -15,10 +15,12 @@ const DispatchModal = ({ order, isOpen, onClose, onSuccess }) => {
   );
 
   const [loading, setLoading] = useState(false);
+  const [ridersLoading, setRidersLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchRiders = async () => {
+      setRidersLoading(true);
       try {
         const res = await axios.get('/admin/riders');
         const activeRiders = (res.data || []).filter(
@@ -27,6 +29,8 @@ const DispatchModal = ({ order, isOpen, onClose, onSuccess }) => {
         setRiders(activeRiders);
       } catch (err) {
         console.error('Error loading riders:', err);
+      } finally {
+        setRidersLoading(false);
       }
     };
     if (isOpen) {
@@ -107,7 +111,12 @@ const DispatchModal = ({ order, isOpen, onClose, onSuccess }) => {
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Select Active Delivery Rider <span className="text-rose-500">*</span>
             </label>
-            {riders.length > 0 ? (
+            {ridersLoading ? (
+              <div className="flex items-center gap-2.5 p-3 bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold rounded-2xl">
+                <MaterialIcon name="sync" size={16} className="animate-spin text-cyan-600" />
+                <span>Loading active OnTime riders...</span>
+              </div>
+            ) : riders.length > 0 ? (
               <select
                 value={selectedRiderId}
                 onChange={(e) => handleSelectRider(e.target.value)}
@@ -181,8 +190,12 @@ const DispatchModal = ({ order, isOpen, onClose, onSuccess }) => {
               disabled={loading || !selectedRiderId}
               className="px-6 py-2.5 bg-cyan-700 hover:bg-cyan-800 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <MaterialIcon name="send" size={16} />
-              <span>{loading ? 'Dispatching...' : 'Confirm Dispatch & Out for Delivery'}</span>
+              <MaterialIcon
+                name={loading ? 'sync' : 'send'}
+                size={16}
+                className={loading ? 'animate-spin' : ''}
+              />
+              <span>{loading ? 'Dispatching Order...' : 'Confirm Dispatch & Out for Delivery'}</span>
             </button>
           </div>
         </form>
