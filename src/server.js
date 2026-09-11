@@ -1,9 +1,18 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const routes = require('./api/routes');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Enable CORS for frontend clients
+app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware to parse JSON and URL-encoded bodies with limits
 app.use(express.json({ limit: '10mb' }));

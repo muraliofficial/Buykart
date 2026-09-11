@@ -16,7 +16,7 @@
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-    "node": "24.x"
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
@@ -24,6 +24,7 @@
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.5.1",
     "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "firebase-admin": "^13.8.0",
