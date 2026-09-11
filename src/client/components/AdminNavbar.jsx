@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MaterialIcon from './common/MaterialIcon';
+import logoImg from '../assets/logo.png';
 
 const AdminNavbar = () => {
   const { logout, currentUser } = useAuth();
@@ -68,12 +69,12 @@ const AdminNavbar = () => {
               <Link to="/admin/dashboard" className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-emerald-500/50 rounded-xl">
                 <div className="relative flex items-center">
                   <img
-                    src="/public/img/logo(1).png"
+                    src={logoImg}
                     alt="Buykart Admin Logo"
                     className="h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://placehold.co/160x50/0D4715/FFFFFF?text=Buykart+Admin';
+                      e.target.src = '/img/logo(1).png';
                     }}
                   />
                   <span className="absolute -bottom-1 -right-1 flex h-3 w-3">

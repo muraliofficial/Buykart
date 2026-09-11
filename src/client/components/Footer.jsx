@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import MaterialIcon from './common/MaterialIcon';
 import { version } from '../../../package.json';
+import logoImg from '../assets/logo.png';
 
 const Footer = () => {
   const trustHighlights = [
@@ -46,12 +47,12 @@ const Footer = () => {
             <Link to="/" className="inline-flex items-center gap-3 group focus:outline-none">
               <div className="p-1 rounded-xl bg-slate-900 border border-slate-800 group-hover:border-emerald-500/40 transition">
                 <img
-                  src="/public/img/logo(1).png"
+                  src={logoImg}
                   alt="Buykart Logo"
                   className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.style.display = 'none';
+                    e.target.src = '/img/logo(1).png';
                   }}
                 />
               </div>

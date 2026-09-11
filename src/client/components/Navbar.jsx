@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CustomerAuthModal from './website/CustomerAuthModal';
 import MaterialIcon from './common/MaterialIcon';
+import logoImg from '../assets/logo.png';
 
 const Navbar = () => {
   const { customer, logoutCustomer } = useAuth();
@@ -26,13 +27,12 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { name: 'Home', path: '/', icon: 'storefront' },
+    { name: 'Home', path: '/', icon: 'home' },
     { name: 'About Us', path: '/about', icon: 'info' },
-    { name: 'Contact', path: '/contact', icon: 'support_agent' },
+    { name: 'Contact', path: '/contact', icon: 'contact_support' }
   ];
 
-  if (activeUser) {
-    navLinks.push({ name: 'My Profile', path: '/account', icon: 'manage_accounts' });
+  if (customer) {
     navLinks.push({ name: 'My Orders', path: '/my-orders', icon: 'receipt_long' });
   }
 
@@ -48,12 +48,12 @@ const Navbar = () => {
               <Link to="/" className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-emerald-500/50 rounded-xl">
                 <div className="relative flex items-center">
                   <img
-                    src="/public/img/logo(1).png"
+                    src={logoImg}
                     alt="Buykart Logo"
                     className="h-11 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://placehold.co/150x50/0D4715/FFFFFF?text=Buykart';
+                      e.target.src = '/img/logo(1).png';
                     }}
                   />
                 </div>
