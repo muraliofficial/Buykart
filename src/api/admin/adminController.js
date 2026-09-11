@@ -173,11 +173,16 @@ exports.getInventory = async (req, res) => {
 // --- ORDER FULFILLMENT & STATUS CONTROLLERS ---
 exports.getOrders = async (req, res) => {
     try {
-        const snapshot = await db.collection(COLLECTION_ORDERS).orderBy('createdAt', 'desc').get();
+        let snapshot;
+        try {
+            snapshot = await db.collection(COLLECTION_ORDERS).orderBy('createdAt', 'desc').get();
+        } catch (orderErr) {
+            snapshot = await db.collection(COLLECTION_ORDERS).get();
+        }
         const orders = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        }));
+        })).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -357,7 +362,17 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
         const usersRef = db.collection(COLLECTION_USERS);
-        const snapshot = await usersRef.where('name', '==', username).get();
+        let snapshot = await usersRef.where('name', '==', username).get();
+
+        if (snapshot.empty && typeof username === 'string') {
+            snapshot = await usersRef.where('name', '==', username.toLowerCase()).get();
+            if (snapshot.empty) {
+                snapshot = await usersRef.where('name', '==', username.toUpperCase()).get();
+            }
+            if (snapshot.empty) {
+                snapshot = await usersRef.where('phone', '==', username).get();
+            }
+        }
 
         if (snapshot.empty) {
             return res.status(401).json({ success: false, message: "Invalid username or password" });

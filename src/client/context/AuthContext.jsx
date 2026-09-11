@@ -7,6 +7,12 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('currentUser');
+      const savedAdminToken = localStorage.getItem('buykart_admin_token');
+      // If user session exists without valid admin token, clear legacy stale session
+      if (savedUser && !savedAdminToken) {
+        localStorage.removeItem('currentUser');
+        return null;
+      }
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (e) {
       return null;
@@ -46,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const interceptor = axios.interceptors.request.use(
+    const reqInterceptor = axios.interceptors.request.use(
       (config) => {
         const url = config.url || '';
         if (url.includes('/admin')) {
@@ -70,8 +76,28 @@ export const AuthProvider = ({ children }) => {
       (error) => Promise.reject(error)
     );
 
+    const resInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          const url = error.config?.url || '';
+          if (url.includes('/admin') && !url.includes('/admin/login') && !url.includes('/admin/addUser')) {
+            localStorage.removeItem('buykart_admin_token');
+            localStorage.removeItem('currentUser');
+            setCurrentUser(null);
+            setAdminToken('');
+            if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+              window.location.href = '/admin/login?session_expired=1';
+            }
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
     return () => {
-      axios.interceptors.request.eject(interceptor);
+      axios.interceptors.request.eject(reqInterceptor);
+      axios.interceptors.response.eject(resInterceptor);
     };
   }, []);
 

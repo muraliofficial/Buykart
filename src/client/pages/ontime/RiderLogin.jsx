@@ -24,7 +24,7 @@ const RiderLogin = () => {
       return;
     }
     setError('');
-    toast.info(`🔑 Test OTP for Rider ${mobile} is 1234`);
+    toast.info(`🔑 OTP Sent to rider ${mobile}`);
     setStep('OTP');
   };
 
@@ -52,7 +52,7 @@ const RiderLogin = () => {
       setTimeout(() => navigate('/ontime/dashboard'), 500);
     } catch (err) {
       setLoading(false);
-      const msg = err.response?.data?.message || 'Rider login failed. Please check mobile & test OTP 1234.';
+      const msg = err.response?.data?.message || 'Rider login failed. Please check mobile & OTP.';
       setError(msg);
       toast.error(msg);
     }
@@ -61,7 +61,7 @@ const RiderLogin = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
-        
+
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
@@ -139,24 +139,11 @@ const RiderLogin = () => {
                   maxLength={4}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="1234"
+                  placeholder="OTP"
                   className="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-center text-xl font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                   required
                   autoFocus
                 />
-              </div>
-
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-[11px] text-amber-400 font-medium">
-                  Test Rider OTP: <strong>1234</strong>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setOtp('1234')}
-                  className="text-[11px] font-bold text-slate-400 hover:text-white underline cursor-pointer"
-                >
-                  Autofill 1234
-                </button>
               </div>
             </div>
 

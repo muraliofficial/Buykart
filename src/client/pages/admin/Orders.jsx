@@ -182,6 +182,10 @@ const Orders = () => {
       const data = Array.isArray(response.data) ? response.data : [];
       setOrders(data);
     } catch (err) {
+      if (err.response?.status === 401) {
+        console.warn('Admin authentication required for orders API.');
+        return;
+      }
       if (retries > 0) {
         setTimeout(() => fetchOrders(silent, retries - 1), 800);
         return;

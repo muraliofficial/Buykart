@@ -126,7 +126,7 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-        
+
         {/* Toast Alert Banner */}
         {toastMessage && (
           <div className="bg-[#0D4715] text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between shadow-md">
@@ -237,14 +237,11 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
                     maxLength={4}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="1234"
+                    placeholder="OTP"
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
                     required
                   />
                 </div>
-                <p className="mt-1.5 text-[11px] text-emerald-700 font-bold">
-                  (Test verification code: <strong>1234</strong>)
-                </p>
               </div>
 
               <button

@@ -4,9 +4,10 @@ import MaterialIcon from './common/MaterialIcon';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, adminToken } = useAuth();
+  const token = adminToken || (typeof window !== 'undefined' ? localStorage.getItem('buykart_admin_token') : '');
 
-  if (!currentUser) {
+  if (!currentUser || !token) {
     return <Navigate to="/admin/login" replace />;
   }
 

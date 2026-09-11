@@ -13,7 +13,12 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('session_expired')) {
+      return 'Admin session expired or authentication required. Please sign in to continue.';
+    }
+    return '';
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
