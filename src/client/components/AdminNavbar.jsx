@@ -141,8 +141,8 @@ const AdminNavbar = () => {
                 <button
                   onClick={handleLogout}
                   className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition cursor-pointer ml-1"
-                  title="Log Out Admin"
-                  aria-label="Log Out Admin"
+                  title="Log Out"
+                  aria-label="Log Out"
                 >
                   <MaterialIcon name="logout" size={18} />
                 </button>

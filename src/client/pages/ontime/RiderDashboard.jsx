@@ -129,11 +129,10 @@ const RiderDashboard = () => {
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <button
             onClick={() => setActiveTab('all')}
-            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
-              activeTab === 'all'
+            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${activeTab === 'all'
                 ? 'bg-slate-800 border-amber-500 ring-2 ring-amber-500/30'
                 : 'bg-slate-900 border-slate-800 hover:bg-slate-850'
-            }`}
+              }`}
           >
             <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Total</span>
             <span className="text-xl font-black text-white">{todayCount}</span>
@@ -141,11 +140,10 @@ const RiderDashboard = () => {
 
           <button
             onClick={() => setActiveTab('pending')}
-            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
-              activeTab === 'pending'
+            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${activeTab === 'pending'
                 ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/30'
                 : 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15'
-            }`}
+              }`}
           >
             <span className="text-[10px] font-black uppercase text-amber-400 block tracking-wider">Pending</span>
             <span className="text-xl font-black text-amber-400">{pendingDeliveries.length}</span>
@@ -153,11 +151,10 @@ const RiderDashboard = () => {
 
           <button
             onClick={() => setActiveTab('delivered')}
-            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
-              activeTab === 'delivered'
+            className={`p-3 rounded-2xl border text-center transition cursor-pointer ${activeTab === 'delivered'
                 ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30'
                 : 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15'
-            }`}
+              }`}
           >
             <span className="text-[10px] font-black uppercase text-emerald-400 block tracking-wider">Delivered</span>
             <span className="text-xl font-black text-emerald-400">{completedDeliveries.length}</span>
@@ -209,9 +206,8 @@ const RiderDashboard = () => {
                 >
                   {/* Status Banner Stripe */}
                   <div
-                    className={`absolute top-0 left-0 right-0 h-1.5 ${
-                      isDelivered ? 'bg-emerald-500' : isFailed ? 'bg-red-500' : isOut ? 'bg-amber-400' : 'bg-cyan-500'
-                    }`}
+                    className={`absolute top-0 left-0 right-0 h-1.5 ${isDelivered ? 'bg-emerald-500' : isFailed ? 'bg-red-500' : isOut ? 'bg-amber-400' : 'bg-cyan-500'
+                      }`}
                   />
 
                   {/* Top Row: Order ID & Status Badge */}
@@ -226,15 +222,14 @@ const RiderDashboard = () => {
                     </div>
 
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 ${
-                        isDelivered
+                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 ${isDelivered
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                           : isFailed
-                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          : isOut
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
-                          : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      }`}
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : isOut
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
+                              : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                        }`}
                     >
                       <MaterialIcon
                         name={isDelivered ? 'check_circle' : isFailed ? 'cancel' : isOut ? 'near_me' : 'schedule'}

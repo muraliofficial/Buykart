@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ProductCard from '../../components/ProductCard';
 import ProductModal from '../../components/ProductModal';
@@ -12,7 +12,29 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('default');
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
+
+  const sortDropdownRef = useRef(null);
+
+  const sortOptions = [
+    { value: 'default', label: 'Recommended', icon: 'auto_awesome', hint: 'Featured & popular' },
+    { value: 'price-low', label: 'Price: Low to High', icon: 'arrow_upward', hint: 'Cheapest first' },
+    { value: 'price-high', label: 'Price: High to Low', icon: 'arrow_downward', hint: 'Premium first' },
+    { value: 'name', label: 'Name: A to Z', icon: 'sort_by_alpha', hint: 'Alphabetical order' },
+  ];
+
+  const currentSort = sortOptions.find((opt) => opt.value === sortBy) || sortOptions[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
+        setSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -130,31 +152,99 @@ const Home = () => {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                    selectedCategory === cat
-                      ? 'bg-[#0D4715] text-white shadow-md shadow-emerald-900/20 scale-105'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                  }`}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${selectedCategory === cat
+                    ? 'bg-[#0D4715] text-white shadow-md shadow-emerald-900/20 scale-105'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    }`}
                 >
                   {cat}
                 </button>
               ))}
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
-              <MaterialIcon name="swap_vert" size={18} className="text-[#0D4715]" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-transparent focus:outline-none cursor-pointer pr-1"
+            {/* Refreshing Custom Sort Dropdown */}
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                className="group flex items-center gap-2.5 bg-white/95 hover:bg-white px-3.5 py-2.5 rounded-2xl border border-slate-200/90 hover:border-emerald-500/40 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                aria-expanded={sortDropdownOpen}
                 aria-label="Sort products"
               >
-                <option value="default">Sort: Recommended</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="name">Name: A to Z</option>
-              </select>
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-200">
+                  <MaterialIcon name={currentSort.icon} size={15} />
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-left">
+                  <span className="text-slate-400 font-medium hidden sm:inline">Sort:</span>
+                  <span className="font-bold text-slate-800 truncate max-w-[120px] sm:max-w-none">
+                    {currentSort.label}
+                  </span>
+                </div>
+                <MaterialIcon
+                  name="expand_more"
+                  size={18}
+                  className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ${
+                    sortDropdownOpen ? 'rotate-180 text-emerald-600' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu Modal / Popover */}
+              {sortDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-60 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-2xl shadow-xl shadow-slate-900/10 p-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Sort Products
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      4 Options
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    {sortOptions.map((opt) => {
+                      const isSelected = opt.value === sortBy;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setSortBy(opt.value);
+                            setSortDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 text-left cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-500/20 shadow-xs'
+                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                                isSelected
+                                  ? 'bg-emerald-700 text-white shadow-xs shadow-emerald-700/30'
+                                  : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              <MaterialIcon name={opt.icon} size={15} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs leading-tight font-bold">{opt.label}</span>
+                              <span className="text-[10px] font-normal text-slate-400 leading-tight">
+                                {opt.hint}
+                              </span>
+                            </div>
+                          </div>
+
+                          {isSelected && (
+                            <MaterialIcon name="check" size={16} className="text-emerald-700 font-bold" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

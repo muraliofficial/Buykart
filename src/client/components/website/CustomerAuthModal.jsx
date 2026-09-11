@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import MaterialIcon from '../common/MaterialIcon';
@@ -21,6 +21,17 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
     city: '',
     pincode: ''
   });
+
+  // Lock background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
