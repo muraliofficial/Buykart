@@ -4,7 +4,19 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/(api|website|admin|ontime|public)(.*)", "destination": "/api/index.js" },
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    {
+      "source": "/(website|admin|ontime|public)(.*)",
+      "missing": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": ".*text/html.*"
+        }
+      ],
+      "destination": "/api/index.js"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
+

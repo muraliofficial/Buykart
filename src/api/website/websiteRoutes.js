@@ -21,17 +21,15 @@ router.get('/getInventory', controller.getAllProducts);
 router.post('/contact', controller.saveContactMessage);
 
 // 4. Authenticated Customer Scope
-router.use(authenticateCustomer);
-
 // Customer Profile routes with validation
-router.post('/customer/profile', validate([validation.validateUpdateProfile]), controller.updateCustomerProfile);
-router.get('/customer/profile/:idOrMobile', controller.getCustomerProfile);
+router.post('/customer/profile', authenticateCustomer, validate([validation.validateUpdateProfile]), controller.updateCustomerProfile);
+router.get('/customer/profile/:idOrMobile', authenticateCustomer, controller.getCustomerProfile);
 
 // Checkout & Orders routes with validation
-router.post('/checkout', validate([validation.validateCheckout]), controller.checkout);
-router.get('/orders', controller.getOrders);
-router.get('/getOrders', controller.getOrders);
-router.put('/orders/:id/cancel', controller.cancelOrder);
-router.put('/customer/orders/:id/cancel', controller.cancelOrder);
+router.post('/checkout', authenticateCustomer, validate([validation.validateCheckout]), controller.checkout);
+router.get('/orders', authenticateCustomer, controller.getOrders);
+router.get('/getOrders', authenticateCustomer, controller.getOrders);
+router.put('/orders/:id/cancel', authenticateCustomer, controller.cancelOrder);
+router.put('/customer/orders/:id/cancel', authenticateCustomer, controller.cancelOrder);
 
 module.exports = router;

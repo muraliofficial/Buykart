@@ -42,11 +42,34 @@ app.use((req, res, next) => {
     next();
 });
 
+const fs = require('fs');
+const distPath = path.join(__dirname, '../dist');
+const distIndex = path.join(distPath, 'index.html');
+
+// Serve static compiled SPA files from 'dist' if available
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+}
+
 // Serve static files (CSS, JS, Images) from the 'public' directory
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
+// Fallback for HTML page requests to support SPA client routing if serverless function handles the route
+app.use((req, res, next) => {
+    if (req.method === 'GET' && req.headers.accept && req.headers.accept.includes('text/html')) {
+        const isApiExplicit = req.path.startsWith('/api/');
+        if (!isApiExplicit && fs.existsSync(distIndex)) {
+            return res.sendFile(distIndex);
+        }
+    }
+    next();
+});
+
 // Health check and root route (must be before route handlers)
 app.get('/', (req, res) => {
+    if (req.headers.accept && req.headers.accept.includes('text/html') && fs.existsSync(distIndex)) {
+        return res.sendFile(distIndex);
+    }
     res.json({ status: "ok", message: "Buykart Backend API is running successfully!" });
 });
 app.get('/health', (req, res) => {
@@ -56,9 +79,9 @@ app.get('/api/health', (req, res) => {
     res.json({ status: "ok" });
 });
 
-// Use API routes (support both root '/' and '/api' prefixes)
-app.use('/', routes);
+// Use API routes (support both '/api' and legacy root '/' prefixes, prioritizing '/api')
 app.use('/api', routes);
+app.use('/', routes);
 
 // Handle 404 for API endpoints
 app.use((req, res) => {
