@@ -63,12 +63,26 @@ const Home = () => {
     fetchProducts();
   }, []);
 
+  const normalizeCategory = (cat) => {
+    if (!cat) return 'General';
+    const c = String(cat).trim();
+    const lower = c.toLowerCase();
+    if (lower === 'vegitables' || lower === 'vegetable' || lower === 'vegetables') return 'Vegetables';
+    if (lower === 'fruits' || lower === 'fruit') return 'Fruits';
+    if (lower.includes('dairy')) return 'Dairy & Eggs';
+    if (lower.includes('bakery')) return 'Bakery';
+    if (lower.includes('snack')) return 'Snacks';
+    if (lower.includes('beverage') || lower.includes('drink')) return 'Beverages';
+    if (lower.includes('pantry') || lower.includes('staple')) return 'Pantry & Staples';
+    return c.charAt(0).toUpperCase() + c.slice(1);
+  };
+
   const safeProducts = Array.isArray(products) ? products.map((p) => ({
     ...p,
-    category: p.category === 'Vegitables' ? 'Vegetables' : p.category
+    category: normalizeCategory(p.category)
   })) : [];
 
-  // Extract unique categories
+  // Extract unique sorted categories
   const categories = ['All', ...new Set(safeProducts.map((p) => p.category).filter(Boolean))];
 
   // Helper to parse numerical price
@@ -79,8 +93,9 @@ const Home = () => {
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     const nameStr = (p.itemName || '').toLowerCase();
     const descStr = (p.description || '').toLowerCase();
-    const queryStr = searchQuery.toLowerCase();
-    const matchesSearch = nameStr.includes(queryStr) || descStr.includes(queryStr);
+    const catStr = (p.category || '').toLowerCase();
+    const queryStr = searchQuery.toLowerCase().trim();
+    const matchesSearch = !queryStr || nameStr.includes(queryStr) || descStr.includes(queryStr) || catStr.includes(queryStr);
     return matchesCategory && matchesSearch;
   });
 
@@ -111,7 +126,7 @@ const Home = () => {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-xl mx-auto pt-4">
+          <div className="max-w-xl mx-auto pt-4 space-y-3">
             <div className="relative flex items-center">
               <div className="absolute left-4 pointer-events-none flex items-center">
                 <MaterialIcon name="search" size={22} className="text-slate-400" />
@@ -133,6 +148,21 @@ const Home = () => {
                 </button>
               )}
             </div>
+
+            {/* Quick Keyword Suggestion Tags */}
+            <div className="flex items-center justify-center gap-1.5 flex-wrap text-[11px] text-emerald-200">
+              <span className="font-semibold text-white/80">Popular:</span>
+              {['Apples', 'Tomatoes', 'Milk', 'Onions', 'Potatoes'].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setSearchQuery(tag)}
+                  className="px-2.5 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white transition cursor-pointer font-medium border border-white/10"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -144,17 +174,21 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <MaterialIcon name="category" size={22} className="text-[#0D4715]" />
             <h2 className="text-xl font-black text-slate-900">Explore Catalog</h2>
+            <span className="text-xs font-bold text-slate-400 ml-1">
+              ({filteredProducts.length} items)
+            </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            {/* Horizontally scrollable category pills on mobile, wrapped on desktop */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap max-w-full">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${selectedCategory === cat
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${selectedCategory === cat
                     ? 'bg-[#0D4715] text-white shadow-md shadow-emerald-900/20 scale-105'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
                     }`}
                 >
                   {cat}

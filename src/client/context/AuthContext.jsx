@@ -89,6 +89,19 @@ export const AuthProvider = ({ children }) => {
             if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
               window.location.href = '/admin/login?session_expired=1';
             }
+          } else if (url.includes('/ontime') || url.includes('/rider')) {
+            localStorage.removeItem('buykart_rider_token');
+            localStorage.removeItem('buykart_rider');
+            setRider(null);
+            setRiderToken('');
+            if (typeof window !== 'undefined' && window.location.pathname.startsWith('/ontime') && window.location.pathname !== '/ontime/login') {
+              window.location.href = '/ontime/login?session_expired=1';
+            }
+          } else if (url.includes('/customer') || url.includes('/orders') || url.includes('/checkout')) {
+            localStorage.removeItem('buykart_customer_token');
+            localStorage.removeItem('buykart_customer');
+            setCustomer(null);
+            setCustomerToken('');
           }
         }
         return Promise.reject(error);

@@ -1,7 +1,8 @@
+const { cleanPhone } = require('../middleware/validator');
+
 // Validation rules for Customer Website App
 exports.validateSendOtp = (req) => {
-  const rawMobile = req.body?.mobile;
-  const cleanMobile = String(rawMobile || '').replace(/\D/g, '').slice(-10);
+  const cleanMobile = cleanPhone(req.body?.mobile);
   if (!cleanMobile || cleanMobile.length !== 10) {
     return 'A valid 10-digit mobile number is required.';
   }
@@ -10,8 +11,7 @@ exports.validateSendOtp = (req) => {
 };
 
 exports.validateVerifyOtp = (req) => {
-  const rawMobile = req.body?.mobile;
-  const cleanMobile = String(rawMobile || '').replace(/\D/g, '').slice(-10);
+  const cleanMobile = cleanPhone(req.body?.mobile);
   if (!cleanMobile || cleanMobile.length !== 10) {
     return 'A valid 10-digit mobile number is required.';
   }
@@ -26,9 +26,12 @@ exports.validateVerifyOtp = (req) => {
 
 exports.validateUpdateProfile = (req) => {
   const { name, mobile, email } = req.body;
-  if (!mobile || !/^\d{10}$/.test(String(mobile).trim())) {
+  const cleanMobile = cleanPhone(mobile);
+  if (!cleanMobile || cleanMobile.length !== 10) {
     return 'A valid 10-digit mobile number is required.';
   }
+  req.body.mobile = cleanMobile;
+
   if (!name || String(name).trim().length < 2) {
     return 'Full name is required (minimum 2 characters).';
   }
@@ -43,9 +46,16 @@ exports.validateCheckout = (req) => {
   if (!cart || typeof cart !== 'object' || Object.keys(cart).length === 0) {
     return 'Your shopping cart is empty. Please add items to checkout.';
   }
-  const mobile = customerMobile || shippingDetails?.phone || phone;
-  if (mobile && !/^\d{10}$/.test(String(mobile).trim())) {
-    return 'A valid 10-digit customer mobile number is required for checkout.';
+  const rawMobile = customerMobile || shippingDetails?.phone || phone;
+  if (rawMobile) {
+    const cleanMobile = cleanPhone(rawMobile);
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      return 'A valid 10-digit customer mobile phone number is required for checkout.';
+    }
+    if (req.body.customerMobile) req.body.customerMobile = cleanMobile;
+    if (req.body.shippingDetails && req.body.shippingDetails.phone) {
+      req.body.shippingDetails.phone = cleanMobile;
+    }
   }
   return null;
 };

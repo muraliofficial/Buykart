@@ -16,9 +16,9 @@ const ProductModal = ({ product, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl space-y-0 animate-in zoom-in-95 duration-200 border border-gray-100">
+      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-0 animate-in zoom-in-95 duration-200 border border-gray-100 overscroll-contain">
         {/* Header Image Box */}
-        <div className="relative h-64 bg-gray-50 overflow-hidden">
+        <div className="relative h-48 sm:h-64 bg-gray-50 overflow-hidden shrink-0">
           <img
             src={getProductImageUrl(product, 'jpg_700')}
             alt={product.itemName || 'Product item'}

@@ -244,6 +244,46 @@ const Navbar = () => {
               );
             })}
           </div>
+
+          <div className="pt-2 border-t border-slate-800">
+            {activeUser ? (
+              <div className="flex items-center justify-between gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                <Link
+                  to="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 text-xs font-bold text-slate-200 hover:text-emerald-400"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-xs">
+                    {activeUser.name ? activeUser.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <p className="text-white font-extrabold text-xs truncate max-w-[130px]">{activeUser.name || 'Account'}</p>
+                    <p className="text-[10px] text-slate-400">View Profile & Addresses</p>
+                  </div>
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition cursor-pointer"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setAuthModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 py-3 rounded-2xl font-black text-xs shadow-md transition cursor-pointer"
+              >
+                <MaterialIcon name="person" size={18} />
+                <span>Customer Login with OTP</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </>

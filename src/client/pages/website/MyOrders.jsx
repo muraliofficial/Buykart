@@ -24,6 +24,8 @@ const MyOrders = () => {
   const [expandedItems, setExpandedItems] = useState({});
   const [receiptOrder, setReceiptOrder] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchUserOrders = async () => {
     if (!activeUser) return;
@@ -49,9 +51,9 @@ const MyOrders = () => {
     fetchUserOrders();
   }, [activeUser]);
 
-  // Lock background scroll when Receipt modal is open
+  // Lock background scroll when Receipt modal or Cancel modal is open
   useEffect(() => {
-    if (receiptOrder) {
+    if (receiptOrder || orderToCancel) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -59,7 +61,24 @@ const MyOrders = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [receiptOrder]);
+  }, [receiptOrder, orderToCancel]);
+
+  const handleCancelOrder = async () => {
+    if (!orderToCancel) return;
+    setCancelling(true);
+    try {
+      const res = await axios.put(`/website/orders/${orderToCancel.id}/cancel`);
+      setToastMessage(res.data?.message || 'Order cancelled successfully and items restocked.');
+      setOrderToCancel(null);
+      await fetchUserOrders();
+    } catch (err) {
+      console.error('Cancel order error:', err);
+      setToastMessage(err.response?.data?.message || 'Failed to cancel order.');
+    } finally {
+      setCancelling(false);
+      setTimeout(() => setToastMessage(null), 4500);
+    }
+  };
 
   const ORDER_STAGES = [
     { key: 'Pending', label: 'Placed', icon: 'receipt_long' },
@@ -1155,7 +1174,7 @@ const MyOrders = () => {
 
                     {/* ORDER ACTION FOOTER */}
                     <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => handleReorder(order)}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0D4715] hover:bg-[#1b5e20] text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
@@ -1172,6 +1191,17 @@ const MyOrders = () => {
                           <MaterialIcon name="receipt" size={15} className="text-slate-600" />
                           <span>View Invoice</span>
                         </button>
+
+                        {String(order.status || '').toLowerCase() === 'pending' && (
+                          <button
+                            onClick={() => setOrderToCancel(order)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition border border-rose-200 cursor-pointer"
+                            title="Cancel this order before it is processed"
+                          >
+                            <MaterialIcon name="cancel" size={15} />
+                            <span>Cancel Order</span>
+                          </button>
+                        )}
                       </div>
 
                       <a
@@ -1325,6 +1355,67 @@ const MyOrders = () => {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* CANCEL ORDER CONFIRMATION MODAL */}
+      {orderToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto shadow-xs">
+                <MaterialIcon name="warning" size={30} filled />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">Cancel Order?</h3>
+                <p className="text-xs text-slate-500 font-medium mt-1.5 leading-relaxed">
+                  Are you sure you want to cancel order <span className="font-mono font-bold text-slate-800">#BK-{orderToCancel.id?.substring(0, 8).toUpperCase()}</span>? 
+                  Items will be returned to store inventory immediately.
+                </p>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-3.5 text-left border border-slate-100 text-xs space-y-1.5">
+                <div className="flex justify-between text-slate-600">
+                  <span>Items:</span>
+                  <span className="font-bold text-slate-800">{Object.keys(orderToCancel.items || {}).length} items</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Total Amount:</span>
+                  <span className="font-bold text-slate-900">₹{Number(orderToCancel.total || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Payment Mode:</span>
+                  <span className="font-bold text-slate-800">{orderToCancel.paymentMethod || 'Cash On Delivery'}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={cancelling}
+                  onClick={() => setOrderToCancel(null)}
+                  className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  Keep Order
+                </button>
+                <button
+                  type="button"
+                  disabled={cancelling}
+                  onClick={handleCancelOrder}
+                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {cancelling ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Cancelling...</span>
+                    </>
+                  ) : (
+                    <span>Yes, Cancel</span>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

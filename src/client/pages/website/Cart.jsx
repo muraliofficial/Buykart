@@ -126,6 +126,12 @@ const Cart = () => {
   const handleFinalCheckout = async (e) => {
     e.preventDefault();
 
+    const cleanPhoneVal = String(shippingDetails.phone || activeUser?.mobile || '').replace(/\D/g, '').slice(-10);
+    if (cleanPhoneVal.length !== 10) {
+      showError('Please enter a valid 10-digit mobile phone number.');
+      return;
+    }
+
     const cleanPincode = String(shippingDetails.pincode || '').trim();
     if (!/^\d{6}$/.test(cleanPincode)) {
       showError('Please enter a valid 6-digit numerical Pincode.');
@@ -136,10 +142,11 @@ const Cart = () => {
 
     const checkoutPayload = {
       ...shippingDetails,
+      phone: cleanPhoneVal,
       pincode: cleanPincode,
       customerId: activeUser?.id,
       customerName: activeUser?.name || shippingDetails.fullName,
-      customerMobile: activeUser?.mobile || shippingDetails.phone,
+      customerMobile: cleanPhoneVal,
       discount: discountAmount,
       appliedCoupon: appliedPromo?.code || null,
       finalAmount: finalTotalPrice,

@@ -31,5 +31,7 @@ router.get('/customer/profile/:idOrMobile', controller.getCustomerProfile);
 router.post('/checkout', validate([validation.validateCheckout]), controller.checkout);
 router.get('/orders', controller.getOrders);
 router.get('/getOrders', controller.getOrders);
+router.put('/orders/:id/cancel', controller.cancelOrder);
+router.put('/customer/orders/:id/cancel', controller.cancelOrder);
 
 module.exports = router;

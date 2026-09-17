@@ -1,5 +1,6 @@
 const { db } = require('../firebase');
 const { generateToken } = require('../middleware/authMiddleware');
+const { cleanPhone } = require('../middleware/validator');
 
 const COLLECTION_RIDERS = 'riders';
 const COLLECTION_ORDERS = 'orders';
@@ -29,7 +30,7 @@ exports.riderVerifyOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid OTP code. Please use test OTP 1234." });
         }
 
-        const cleanMobile = String(mobile).trim();
+        const cleanMobile = cleanPhone(mobile) || String(mobile).trim();
         let snap = await db.collection(COLLECTION_RIDERS).where('mobile', '==', cleanMobile).get();
         
         if (snap.empty) {
@@ -86,9 +87,11 @@ exports.getRiderOrders = async (req, res) => {
         const snap = await db.collection(COLLECTION_ORDERS).get();
         const allOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
+        const cleanParam = cleanPhone(riderId) || riderId;
         const riderOrders = allOrders.filter(o => 
             o.assignedRiderId === riderId || 
-            o.assignedRiderMobile === riderId
+            o.assignedRiderMobile === riderId ||
+            (cleanParam && cleanPhone(o.assignedRiderMobile) === cleanParam)
         );
         res.status(200).json(riderOrders);
     } catch (error) {

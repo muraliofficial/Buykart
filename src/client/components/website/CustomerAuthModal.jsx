@@ -77,13 +77,17 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const res = await axios.post('/website/customer/verify-otp', { mobile, otp });
       setLoading(false);
-      const { isNew, customer } = res.data;
+      const { isNew, customer, token } = res.data;
+
+      // Always save session credentials so subsequent profile update is authorized
+      if (customer && token) {
+        loginCustomer(customer, token);
+      }
 
       if (isNew || !customer?.name) {
         showToast('OTP Verified! Please complete your profile.');
         setStep('PROFILE');
       } else {
-        loginCustomer(customer, res.data.token);
         showToast(`Welcome back, ${customer.name}!`);
         if (onSuccess) onSuccess(customer);
         setTimeout(() => onClose(), 600);
@@ -225,21 +229,29 @@ const CustomerAuthModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Enter 4-Digit Code
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Enter 4-Digit Code
+                  </label>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                    Demo OTP: 1234
+                  </span>
+                </div>
                 <div className="relative flex items-center">
                   <div className="absolute left-3.5 pointer-events-none text-slate-400">
                     <MaterialIcon name="lock" size={18} />
                   </div>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
                     maxLength={4}
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="OTP"
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="1234"
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D4715]"
                     required
+                    autoFocus
                   />
                 </div>
               </div>

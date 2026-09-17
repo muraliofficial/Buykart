@@ -14,7 +14,7 @@ const ProductCard = ({ product, onCardClick }) => {
       {/* Image & Category Pill */}
       <div
         onClick={() => onCardClick && onCardClick(product)}
-        className="relative h-52 overflow-hidden bg-gray-50 cursor-pointer"
+        className="relative h-44 sm:h-52 overflow-hidden bg-gray-50 cursor-pointer"
       >
         <img
           src={getProductImageUrl(product, 'jpg_300')}
@@ -41,7 +41,7 @@ const ProductCard = ({ product, onCardClick }) => {
       </div>
 
       {/* Details */}
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="p-4 sm:p-5 flex flex-col flex-grow">
         <div
           onClick={() => onCardClick && onCardClick(product)}
           className="cursor-pointer"

@@ -103,6 +103,23 @@ const Login = () => {
             </div>
           </div>
 
+          <div className="flex items-center justify-between bg-white/10 px-3.5 py-2 rounded-xl border border-white/15 text-xs text-white/90">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span className="text-[11px] font-semibold text-emerald-100">Demo: <strong className="text-white">admin</strong> / <strong className="text-white">admin123</strong></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setUsername('admin');
+                setPassword('admin123');
+              }}
+              className="text-[10px] font-bold text-amber-300 hover:text-amber-200 uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded cursor-pointer"
+            >
+              Fill Demo
+            </button>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

@@ -375,6 +375,24 @@ exports.login = async (req, res) => {
         }
 
         if (snapshot.empty) {
+            const allUsers = await usersRef.get();
+            if (allUsers.empty && String(username).toLowerCase() === 'admin' && password === 'admin123') {
+                const hashedPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
+                const docRef = await usersRef.add({
+                    name: 'Admin',
+                    phone: '9876543210',
+                    role: 'admin',
+                    password: hashedPassword,
+                    createdAt: new Date().toISOString()
+                });
+                const token = generateToken({ id: docRef.id, name: 'Admin', role: 'admin' });
+                return res.status(200).json({
+                    success: true,
+                    message: 'Admin account initialized successfully',
+                    token,
+                    user: { id: docRef.id, name: 'Admin', phone: '9876543210', role: 'admin' }
+                });
+            }
             return res.status(401).json({ success: false, message: "Invalid username or password" });
         }
 

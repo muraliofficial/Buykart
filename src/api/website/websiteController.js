@@ -1,10 +1,27 @@
 const { db } = require('../firebase');
 const { generateToken } = require('../middleware/authMiddleware');
+const { cleanPhone } = require('../middleware/validator');
 
 const COLLECTION_PRODUCTS = 'products';
 const COLLECTION_INVENTORY = 'inventory';
 const COLLECTION_CUSTOMERS = 'customers';
 const COLLECTION_ORDERS = 'orders';
+
+// Helper to restock items into inventory when order is cancelled
+const restockOrderItems = async (orderData) => {
+    if (!orderData || !orderData.items) return;
+    const itemsList = Object.values(orderData.items);
+    for (const item of itemsList) {
+        if (item.id && item.quantity) {
+            const itemRef = db.collection(COLLECTION_INVENTORY).doc(item.id);
+            const itemDoc = await itemRef.get();
+            if (itemDoc.exists) {
+                const currentStock = Number(itemDoc.data().op_stock || 0);
+                await itemRef.update({ op_stock: currentStock + Number(item.quantity) });
+            }
+        }
+    }
+};
 
 // 1. Get All Products for Storefront
 exports.getAllProducts = async (req, res) => {
@@ -54,26 +71,36 @@ exports.customerVerifyOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid OTP code. Please use test OTP 1234." });
         }
         
-        const snapshot = await db.collection(COLLECTION_CUSTOMERS).where('mobile', '==', String(mobile).trim()).get();
+        const cleanMobile = cleanPhone(mobile);
+        const snapshot = await db.collection(COLLECTION_CUSTOMERS).where('mobile', '==', cleanMobile).get();
+        
+        let customerDoc;
+        let customerData;
+        let isNew = false;
+
         if (snapshot.empty) {
-            return res.status(200).json({
-                success: true,
-                message: "OTP verified. Customer profile details required.",
-                isNew: true,
-                mobile
-            });
+            isNew = true;
+            customerData = {
+                name: '',
+                mobile: cleanMobile,
+                email: '',
+                addresses: [],
+                createdAt: new Date().toISOString()
+            };
+            const docRef = await db.collection(COLLECTION_CUSTOMERS).add(customerData);
+            customerDoc = { id: docRef.id, data: () => customerData };
+        } else {
+            customerDoc = snapshot.docs[0];
+            customerData = customerDoc.data();
+            isNew = !customerData.name || customerData.name.trim() === '';
         }
 
-        const customerDoc = snapshot.docs[0];
-        const customerData = customerDoc.data();
-        const isComplete = Boolean(customerData.name && customerData.name.trim() !== '');
-
-        const token = generateToken({ id: customerDoc.id, mobile: customerData.mobile, role: 'customer' });
+        const token = generateToken({ id: customerDoc.id, mobile: cleanMobile, role: 'customer' });
 
         res.status(200).json({
             success: true,
-            message: "Customer login successful",
-            isNew: !isComplete,
+            message: isNew ? "OTP verified. Customer profile details required." : "Customer login successful",
+            isNew,
             token,
             customer: { id: customerDoc.id, ...customerData }
         });
@@ -221,10 +248,10 @@ exports.checkout = async (req, res) => {
 exports.getOrders = async (req, res) => {
     try {
         const authCustomerId = req.customer?.id;
-        const authCustomerMobile = req.customer?.mobile;
+        const authCustomerMobile = cleanPhone(req.customer?.mobile);
 
         const customerId = authCustomerId || req.query.customerId;
-        const mobile = authCustomerMobile || req.query.mobile;
+        const mobile = authCustomerMobile || cleanPhone(req.query.mobile);
 
         // Security check: Never expose full database of customer orders to public callers
         if (!customerId && !mobile) {
@@ -237,10 +264,11 @@ exports.getOrders = async (req, res) => {
         const cleanCustId = customerId ? String(customerId).trim() : null;
         const cleanMob = mobile ? String(mobile).trim() : null;
 
-        orders = orders.filter(o =>
-            (cleanCustId && (o.userId === cleanCustId || o.customerId === cleanCustId)) ||
-            (cleanMob && (o.customerMobile === cleanMob || o.shippingDetails?.phone === cleanMob))
-        );
+        orders = orders.filter(o => {
+            const matchesId = cleanCustId && (o.userId === cleanCustId || o.customerId === cleanCustId);
+            const matchesMob = cleanMob && (cleanPhone(o.customerMobile) === cleanMob || cleanPhone(o.shippingDetails?.phone) === cleanMob);
+            return matchesId || matchesMob;
+        });
 
         res.status(200).json(orders);
     } catch (error) {
@@ -264,6 +292,60 @@ exports.saveContactMessage = async (req, res) => {
         const docRef = await db.collection('contacts').add(contactDoc);
         res.status(201).json({ success: true, message: "Message saved successfully!", id: docRef.id });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 10. Cancel Order (Customer self-service: only if status is 'Pending')
+exports.cancelOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const authCustomerId = req.customer?.id;
+        const authCustomerMobile = cleanPhone(req.customer?.mobile);
+
+        const orderRef = db.collection(COLLECTION_ORDERS).doc(id);
+        const orderDoc = await orderRef.get();
+
+        if (!orderDoc.exists) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        const orderData = orderDoc.data();
+        const orderPhone = cleanPhone(orderData.customerMobile || orderData.shippingDetails?.phone);
+
+        // Verify that this order belongs to the authenticated customer
+        const isAuthorized = 
+            (authCustomerId && (orderData.customerId === authCustomerId || orderData.userId === authCustomerId)) ||
+            (authCustomerMobile && orderPhone === authCustomerMobile);
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, message: "You are not authorized to cancel this order" });
+        }
+
+        const currentStatus = String(orderData.status || '').toLowerCase();
+        if (currentStatus !== 'pending') {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Cannot cancel order in "${orderData.status}" stage. Please contact customer support.` 
+            });
+        }
+
+        // Restock items back to inventory
+        await restockOrderItems(orderData);
+
+        await orderRef.update({
+            status: "Cancelled",
+            cancellationReason: "Cancelled by customer",
+            cancelledAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Order cancelled successfully and items restocked to inventory." 
+        });
+    } catch (error) {
+        console.error("Cancel Order Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

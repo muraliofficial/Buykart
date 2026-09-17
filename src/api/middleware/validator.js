@@ -15,8 +15,14 @@ exports.validate = (validations) => {
 };
 
 // Common validation primitives
+exports.cleanPhone = (val) => {
+  if (!val) return '';
+  return String(val).replace(/\D/g, '').slice(-10);
+};
+
 exports.isMobile = (val) => {
-  return typeof val === 'string' && /^[0-[#]?[0-9]{10}$/.test(val.trim());
+  const cleaned = exports.cleanPhone(val);
+  return cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned);
 };
 
 exports.isEmpty = (val) => {

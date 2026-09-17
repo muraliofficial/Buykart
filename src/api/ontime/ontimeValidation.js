@@ -1,7 +1,10 @@
+const { cleanPhone } = require('../middleware/validator');
+
 // Validation rules for OnTime Rider App
 exports.validateRiderLogin = (req) => {
   const { mobile, otp } = req.body;
-  if (!mobile || !/^\d{10}$/.test(String(mobile).trim())) {
+  const cleaned = cleanPhone(mobile);
+  if (!cleaned || cleaned.length !== 10) {
     return 'A valid 10-digit rider mobile number is required.';
   }
   if (!otp || String(otp).trim().length !== 4) {

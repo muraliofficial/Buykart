@@ -140,7 +140,7 @@ const Account = () => {
       };
       const res = await axios.post('/website/customer/profile', payload);
       setSaving(false);
-      loginCustomer(res.data.customer);
+      loginCustomer(res.data.customer, res.data.token);
       setEditingProfile(false);
       showSuccess('Profile updated successfully!');
     } catch (err) {
@@ -234,7 +234,7 @@ const Account = () => {
         addresses: updated
       };
       const res = await axios.post('/website/customer/profile', payload);
-      loginCustomer(res.data.customer);
+      loginCustomer(res.data.customer, res.data.token);
       showSuccess(wasEditing ? 'Delivery address updated successfully!' : 'Delivery address saved successfully!');
     } catch (e) {
       showError('Failed to save address.');
@@ -259,7 +259,7 @@ const Account = () => {
             addresses: updated
           };
           const res = await axios.post('/website/customer/profile', payload);
-          loginCustomer(res.data.customer);
+          loginCustomer(res.data.customer, res.data.token);
           showSuccess('Address removed.');
         } catch (e) {
           showError('Failed to remove address.');

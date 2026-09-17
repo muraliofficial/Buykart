@@ -127,9 +127,14 @@ const RiderLogin = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                Enter 4-Digit Rider OTP
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Enter 4-Digit Rider OTP
+                </label>
+                <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full">
+                  Demo OTP: 1234
+                </span>
+              </div>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
                   <MaterialIcon name="pin" size={20} />
@@ -137,9 +142,10 @@ const RiderLogin = () => {
                 <input
                   type="text"
                   maxLength={4}
+                  inputMode="numeric"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="OTP"
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="1234"
                   className="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-center text-xl font-black tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                   required
                   autoFocus
